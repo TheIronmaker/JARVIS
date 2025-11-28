@@ -2,7 +2,6 @@ from jarvis.modules.camera import Camera
 import cv2
 import time
 
-
 def main():
     cam = Camera()
     cam.start()

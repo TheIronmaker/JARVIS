@@ -1,7 +1,6 @@
 import threading
 
 from jarvis.modules import Camera, HandTracker
-from jarvis.modules.camera import start_instance
 from jarvis.app_core.app import run_app
 
 shared_state = {
@@ -12,19 +11,12 @@ shared_state = {
 
 def main_loop(cam, tracker, state):
     while True:
-
-        # Get image and overlay
-        frame = cam.img.copy() if cam.img is not None else None
-        #cam.show_image()
-        #if cv2.waitKey(1) & 0xFF == 27:  # ESC to quit
-        #    break
+        frame = cam.img_rgb() 
         #overlay = tracker.overlay
         #if overlay is not None:
         #   frame = overlay
-
-        # Update shared variable
         state["camera_display"] = frame
-        # update thread status if desired
+
         #state["status"]["cam_alive"] = cam.running
         #state["status"]["tracker_alive"] = tracker.running
 
@@ -33,7 +25,6 @@ def main_loop(cam, tracker, state):
 
 def main():
     cam = Camera()
-    proc = start_instance()
     tracker = HandTracker()
 
     for t in [cam, tracker]: t.start()

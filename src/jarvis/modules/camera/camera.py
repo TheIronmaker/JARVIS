@@ -10,7 +10,8 @@ class Camera(ThreadedResource):
     def __init__(self):
         self.settings = settings["Camera"]
         super().__init__(sleep_time=self.settings["CPU_time_limit"])
-        self.img = 100 * np.ones((480, 640, 3), dtype=np.uint8)
+        self.blank = 100 * np.ones((480, 640, 3), dtype=np.uint8)
+        self.img = self.blank.copy()
         try: self.cap = cv2.VideoCapture(0)
         except: logger.error("Could not open camera")
     
@@ -26,7 +27,9 @@ class Camera(ThreadedResource):
             return False
         return True
 
-    def img_rgb(self): return cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
+    def img_rgb(self):
+        if self.img is not None: return cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
+        return self.blank
 
     def show_output(self):
         if self.img is None:

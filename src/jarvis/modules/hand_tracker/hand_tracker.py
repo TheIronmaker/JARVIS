@@ -1,4 +1,5 @@
 import mediapipe as mp
+import numpy as np
 
 from jarvis.app_core import logger
 from jarvis.app_core.threading import ThreadedResource
