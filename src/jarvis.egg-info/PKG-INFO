@@ -1,8 +1,0 @@
-Metadata-Version: 2.4
-Name: jarvis
-Version: 0.1.1
-Summary: JARVIS modular control system
-Author: Andy
-License-File: LICENSE
-Requires-Dist: PySide6
-Dynamic: license-file
