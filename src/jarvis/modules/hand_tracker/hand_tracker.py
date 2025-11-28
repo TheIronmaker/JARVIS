@@ -1,11 +1,11 @@
 import cv2
 import mediapipe as mp
-import numpy as np
 
 from jarvis.app_core import logger
+from jarvis.app_core.threading import ThreadedResource
 
 
-class HandTracker:
+class HandTracker(ThreadedResource):
     def __init__(self, draw=True, max_hands=2, detection_conf=0.7, tracking_conf=0.7):
         self.draw = draw
         self.results = None

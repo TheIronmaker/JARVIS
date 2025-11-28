@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 
 from jarvis.app_core import logger
-from jarvis.app_core.threading.thread import ThreadedResource
+from jarvis.app_core.threading import ThreadedResource
 from jarvis.settings import settings
 
 class Camera(ThreadedResource):
