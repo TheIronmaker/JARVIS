@@ -1,6 +1,4 @@
-from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QDockWidget
-)
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QDockWidget, QGroupBox, QSizePolicy
 from PySide6.QtCore import Qt, QTimer
 import sys
 
@@ -14,6 +12,9 @@ class MainWindow(QMainWindow):
         self.setDockOptions(QMainWindow.AllowTabbedDocks)
         self.modules = {}
 
+        self.camera_view = CameraView()
+        self.camera_box = self.create_view(self.camera_view, min_size=(125, 125))
+
         self._build_central()
 
         from jarvis.private_tests.finance.view import FinanceWindow
@@ -25,12 +26,15 @@ class MainWindow(QMainWindow):
     def _build_central(self):
         central = QWidget()
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Main workspace"))
+
+        self.workspace = QLabel("Main workspace")
+        self.workspace.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        layout.addWidget(self.workspace)
+        layout.addWidget(self.camera_box)
+
         central.setLayout(layout)
         self.setCentralWidget(central)
-
-        self.camera_view = CameraView()
-        layout.addWidget(self.camera_view)
 
     def add_module(self, name, widget, dock_area="right", initial_size=300):
         area = {
@@ -49,8 +53,20 @@ class MainWindow(QMainWindow):
         self.resizeDocks([dock], [initial_size], orientation)
         self.modules[name] = dock
     
+    def create_view(self, view, min_size=(125, 125), max_size=(1000, 1000)):
+        view_box = QGroupBox()
+        view_box.setMinimumSize(min_size[0], min_size[1])
+        view_box.setMaximumSize(max_size[0], max_size[1])
+
+        layout = QVBoxLayout()
+        layout.addWidget(view)
+        layout.setContentsMargins(0, 0, 0, 0)
+        view_box.setLayout(layout)
+
+        return view_box
+
     def update_views(self):
-        self.camera_view.update_frame(self.shared_state.get("camera_display"))
+        self.camera_view.update_frame(self.shared_state.get("camera_display"), 12)
 
 def run_app(shared_state):
     app = QApplication(sys.argv)

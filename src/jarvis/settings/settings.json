@@ -1,1 +1,8 @@
-{"Camera":{"CPU_time_limit":0.01}}
+{
+"Camera":{
+    "CPU_time_limit":0.01,
+    "button_max_width":250,
+    "max_video_width":2160,
+    "max_video_height":1440
+    }
+}
