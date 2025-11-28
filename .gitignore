@@ -1,7 +1,22 @@
+# -------------------------
 # Random Files/Folders
+# -------------------------
 private_tests/
 
-# Project build files
-*.egg-info/
+# -------------------------
+# Python cache / artifacts
+# -------------------------
 __pycache__/
 *.py[cod]
+
+# Editable install metadata
+*.egg-info/
+
+# Virtual environment
+venv/
+
+# macOS Finder metadata
+.DS_Store
+
+# VS Code settings folder
+.vscode/
