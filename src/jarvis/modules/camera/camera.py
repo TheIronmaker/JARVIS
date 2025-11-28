@@ -28,7 +28,7 @@ class Camera(ThreadedResource):
 
     def img_rgb(self): return cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
 
-    def show_image(self):
+    def show_output(self):
         if self.img is None:
             logger.warning("Image Viewer active with no image to show")
         else:
@@ -39,17 +39,16 @@ class Camera(ThreadedResource):
                 return False
         return True
 
+    def show_frame(self, img):
+        if self.img is None: logger.warning("Image Viewer active with no image to show")
+        else:
+            try:
+                cv2.imshow("Camera Viewer", img)
+            except Exception as e:
+                logger.error(f"Unable to display image capture: {e}")
+                return False
+        return True
+
     def close(self):
         self.cap.release()
         cv2.destroyAllWindows()
-
-cam = Camera()
-cam.start()
-
-try:
-    while True:
-        cam.show_image()
-        if cv2.waitKey(1) & 0xFF == 27:
-            break
-finally:
-    cam.stop()

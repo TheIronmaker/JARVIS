@@ -47,9 +47,7 @@ class MainWindow(QMainWindow):
 
         self.modules[name] = dock
 
-def run_app():
-    from src.jarvis.modules import HandTracker
-
+def run_app(shared_state):
     app = QApplication(sys.argv)
     window = MainWindow()
     window.resize(1200, 800)
