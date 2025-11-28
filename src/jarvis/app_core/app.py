@@ -14,8 +14,8 @@ class MainWindow(QMainWindow):
 
         self._build_central()
 
-        from private_tests.finance.view import FinanceWindow
-        from modules.hand_tracker.view import HandTrackerWindow
+        from jarvis.private_tests.finance.view import FinanceWindow
+        from jarvis.modules.hand_tracker.view import HandTrackerWindow
 
         self.add_module("finance", FinanceWindow(), dock_area="right")
         self.add_module("hand tracker", HandTrackerWindow(), dock_area="left")

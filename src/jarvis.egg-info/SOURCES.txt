@@ -1,6 +1,7 @@
 LICENSE
 README.md
 pyproject.toml
+src/jarvis/main.py
 src/jarvis.egg-info/PKG-INFO
 src/jarvis.egg-info/SOURCES.txt
 src/jarvis.egg-info/dependency_links.txt
@@ -8,11 +9,9 @@ src/jarvis.egg-info/requires.txt
 src/jarvis.egg-info/top_level.txt
 src/jarvis/app_core/__init__.py
 src/jarvis/app_core/app.py
-src/jarvis/app_core/main.py
-src/jarvis/app_core/services/__init__.py
-src/jarvis/app_core/services/logger.py
 src/jarvis/modules/__init__.py
 src/jarvis/modules/hand_tracker/__init__.py
+src/jarvis/modules/hand_tracker/view.py
 src/jarvis/private_tests/__init__.py
 src/jarvis/private_tests/finance/__init__.py
 src/jarvis/private_tests/finance/storage.py

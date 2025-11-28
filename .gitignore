@@ -1,2 +1,7 @@
 # Random Files/Folders
 private_tests/
+
+# Project build files
+*.egg-info/
+__pycache__/
+*.py[cod]
