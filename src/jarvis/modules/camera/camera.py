@@ -4,19 +4,20 @@ import numpy as np
 
 from jarvis.app_core import logger
 from jarvis.app_core.threading.thread import ThreadedResource
-#from jarvis.settings import settings
+from jarvis.settings import settings
 
 class Camera(ThreadedResource):
     def __init__(self):
-        super().__init__(sleep_time=0.01)
-        self.img = 255 * np.ones((480, 640, 3), dtype=np.uint8)
+        self.settings = settings["Camera"]
+        super().__init__(sleep_time=self.settings["CPU_time_limit"])
+        self.img = 100 * np.ones((480, 640, 3), dtype=np.uint8)
         try: self.cap = cv2.VideoCapture(0)
         except: logger.error("Could not open camera")
     
     def _loop(self):
         while self.running:
             self.capture_image()
-            time.sleep(0.01)
+            time.sleep(self.settings["CPU_time_limit"])
     
     def capture_image(self):
         success, self.img = self.cap.read()
