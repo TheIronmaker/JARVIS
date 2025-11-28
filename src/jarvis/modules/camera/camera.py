@@ -31,26 +31,17 @@ class Camera(ThreadedResource):
         if self.img is not None: return cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
         return self.blank
 
-    def show_output(self):
-        if self.img is None:
-            logger.warning("Image Viewer active with no image to show")
-        else:
-            try:
-                cv2.imshow("Camera Viewer", self.img)
-            except Exception as e:
-                logger.error(f"Unable to display image capture: {e}")
-                return False
-        return True
-
-    def show_frame(self, img):
-        if self.img is None: logger.warning("Image Viewer active with no image to show")
-        else:
-            try:
-                cv2.imshow("Camera Viewer", img)
-            except Exception as e:
-                logger.error(f"Unable to display image capture: {e}")
-                return False
-        return True
+    def show_output(self, img=None):
+        display_img = img or self.img
+        if display_img is None:
+            logger.warning("Image Viewer active with no camera to show")
+            return False
+        try:
+            cv2.imshow("Camera Viewer", display_img)
+            return True
+        except Exception as e:
+            logger.error(f"Unable to display image: {e}")
+            return False
 
     def close(self):
         self.cap.release()
