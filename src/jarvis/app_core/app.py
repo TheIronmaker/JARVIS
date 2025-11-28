@@ -48,6 +48,8 @@ class MainWindow(QMainWindow):
         self.modules[name] = dock
 
 def run_app():
+    from jarvis.modules.hand_tracker.processor import processor
+
     app = QApplication(sys.argv)
     window = MainWindow()
     window.resize(1200, 800)
