@@ -10,6 +10,7 @@ class HandTracker(ThreadedResource):
         super().__init__()
         self.draw = draw
         self.results = None
+        self.img = None
 
         try:
             self.mp_hands = mp.solutions.hands
@@ -27,23 +28,22 @@ class HandTracker(ThreadedResource):
         if img is None:
             logger.error("Image processor called with no image to process")
             return False
-        self.results = self.hands.process()
-        return True
+        self.results = self.hands.process(img)
+        self.img = img
 
     def overlay_tracking(self):
         if self.results is not None and self.results.multi_hand_landmarks:
             for hand_landmarks in self.results.multi_hand_landmarks:
-                self.mp_draw.draw_landmarks(100 * np.ones((480, 640, 3), dtype=np.uint8), hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
+                self.mp_draw.draw_landmarks(self.img, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
+        return self.img
 
 
 """
 hand_tracker = HandTracker()
 
 while True:
-    hand_tracker.capture_image()
     hand_tracker.process_image()
     hand_tracker.overlay_tracking()
-    hand_tracker.show_image()
 
     if cv2.waitKey(1) & 0xFF == 27:  # ESC to quit
         break
