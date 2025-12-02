@@ -1,7 +1,7 @@
 import threading
 import time
 
-from jarvis.modules import Camera, HandTracker
+from jarvis.modules import Camera, HandTracker, FaceTracker
 from jarvis.app_core.app import run_app
 
 shared_state = {
@@ -10,34 +10,31 @@ shared_state = {
 }
 
 
-def main_loop(cam, hand_tracker, state):
+def main_loop(modules, state):
     while True:
-        frame = cam.img_rgb()
-        #overlay = tracker.overlay
-        #if overlay is not None:
-        #   frame = overlay
-        hand_tracker.process_image(frame)
-        frame = hand_tracker.overlay_tracking()
-        state["camera_display"] = frame #hand_tracker.results
+        frame = modules["cam"].img_rgb()
+        modules["face_tracker"].process_image(frame)
+        state["camera_display"] = modules["face_tracker"].overlay_tracking(frame)
 
         #state["status"]["cam_alive"] = cam.running
         #state["status"]["tracker_alive"] = tracker.running
 
-        # Maybe throttle update timing
+        # Throttle update timing - to be refined
         time.sleep(0.01)
 
 def main():
-    cam = Camera()
-    hand_tracker = HandTracker()
+    modules = {"cam":Camera(),
+               "hand_tracker":HandTracker(),
+               "face_tracker":FaceTracker()}
 
-    for t in [cam]: t.start()
+    for t in [modules["cam"]]: t.start()
 
-    main_thread = threading.Thread(target=main_loop, args=(cam, hand_tracker, shared_state), daemon=True)
+    main_thread = threading.Thread(target=main_loop, args=(modules, shared_state), daemon=True)
     main_thread.start()
 
     run_app(shared_state)
 
-    for t in [cam]: t.stop()
+    for t in [modules["cam"]]: t.stop()
     main_thread.join()
 
 if __name__ == "__main__":
