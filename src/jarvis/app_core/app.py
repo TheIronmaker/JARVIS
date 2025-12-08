@@ -3,6 +3,7 @@ from PySide6.QtCore import Qt, QTimer
 import sys
 
 from jarvis.modules.camera.view import CameraView
+from jarvis.settings import settings
 
 class MainWindow(QMainWindow):
     def __init__(self, shared_state):
@@ -17,11 +18,11 @@ class MainWindow(QMainWindow):
 
         self._build_central()
 
-        from jarvis.private_tests.finance.view import FinanceWindow
         from jarvis.modules.hand_tracker.view import HandTrackerWindow
-
-        self.add_module("finance", FinanceWindow(), dock_area="right")
-        self.add_module("hand tracker", HandTrackerWindow(), dock_area="left")
+        if settings["private_tests"]:
+            from jarvis.private_tests.finance.view import FinanceWindow
+            self.add_dock("finance", FinanceWindow(), dock_area="right")
+        self.add_dock("hand tracker", HandTrackerWindow(), dock_area="left")
 
     def _build_central(self):
         central = QWidget()
@@ -36,7 +37,7 @@ class MainWindow(QMainWindow):
         central.setLayout(layout)
         self.setCentralWidget(central)
 
-    def add_module(self, name, widget, dock_area="right", initial_size=300):
+    def add_dock(self, name, widget, dock_area="right", initial_size=300):
         area = {
             "left": Qt.LeftDockWidgetArea,
             "right": Qt.RightDockWidgetArea,

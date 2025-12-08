@@ -4,11 +4,12 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jarvis"
-version = "0.1.1"
-description = "JARVIS modular control system"
+version = "0.1.2"
+description = "JARVIS Modular Control System"
 authors = [{name = "Andy"}]
 dependencies = [
     "PySide6",
+    "mediapipe"
 ]
 
 [tool.setuptools.packages.find]
