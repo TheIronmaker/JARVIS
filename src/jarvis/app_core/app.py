@@ -3,12 +3,13 @@ from PySide6.QtCore import Qt, QTimer
 import sys
 
 from jarvis.modules.camera.view import CameraView
+from jarvis.modules.hand_tracker.view import HandTrackerView
 from jarvis.settings import settings
 
 class MainWindow(QMainWindow):
-    def __init__(self, shared_state):
+    def __init__(self, state):
         super().__init__()
-        self.shared_state = shared_state
+        self.state = state
         self.setWindowTitle("JARVIS")
         self.setDockOptions(QMainWindow.AllowTabbedDocks)
         self.modules = {}
@@ -18,11 +19,12 @@ class MainWindow(QMainWindow):
 
         self._build_central()
 
-        from jarvis.modules.hand_tracker.view import HandTrackerWindow
         if settings["private_tests"]:
             from jarvis.private_tests.finance.view import FinanceWindow
             self.add_dock("finance", FinanceWindow(), dock_area="right")
-        self.add_dock("hand tracker", HandTrackerWindow(), dock_area="left")
+        
+        self.hand_tracker = HandTrackerView()
+        self.add_dock("hand tracker", self.hand_tracker, dock_area="left", initial_size=500)
 
     def _build_central(self):
         central = QWidget()
@@ -67,11 +69,12 @@ class MainWindow(QMainWindow):
         return view_box
 
     def update_views(self):
-        self.camera_view.update_frame(self.shared_state.get("camera_display"), 12)
+        self.camera_view.update_frame(self.state.get("camera_display"), 12)
+        self.hand_tracker.update_frame(self.state.get("camera_tracker").get("coordinates_overlay"))
 
-def run_app(shared_state):
+def run_app(state):
     app = QApplication(sys.argv)
-    window = MainWindow(shared_state)
+    window = MainWindow(state)
     window.resize(1200, 800)
     window.show()
 

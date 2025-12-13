@@ -5,15 +5,11 @@ import sys
 import os
 
 def start_instance():
-    """Launch the standalone camera viewer as a separate Python process."""
+    """Launches the Camera Viewer as a separate Python process."""
 
-    script_path = os.path.join(
-        os.path.dirname(__file__),
-        "camera_viewer.py"
-    )
+    script_path = os.path.join(os.path.dirname(__file__), "camera_viewer.py")
 
     return subprocess.Popen(
         [sys.executable, script_path],
         stdout=subprocess.DEVNULL,
-        stderr=subprocess.STDOUT,
-    )
+        stderr=subprocess.STDOUT)

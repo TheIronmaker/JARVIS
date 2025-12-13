@@ -20,11 +20,13 @@ class Camera(ThreadedResource):
             self.capture_image()
             time.sleep(self.settings["CPU_time_limit"])
     
-    def capture_image(self):
-        success, self.img = self.cap.read()
+    def capture_image(self, flip=True):
+        success, img = self.cap.read()
         if not success:
             logger.error("Unable to capture video input")
             return False
+        if flip: self.img = cv2.flip(img, 1)
+        else: self.img = img
         return True
 
     def img_rgb(self):
