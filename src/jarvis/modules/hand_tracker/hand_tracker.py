@@ -27,3 +27,8 @@ class HandTracker(ThreadedResource):
         for lm in self.results.multi_hand_landmarks or []:
             self.mp_draw.draw_landmarks(img, lm, self.mp_hands.HAND_CONNECTIONS)
         return img
+    
+    def coordinates(self):
+        if self.results.multi_hand_landmarks:
+            print(self.results.multi_hand_landmarks)
+        return False

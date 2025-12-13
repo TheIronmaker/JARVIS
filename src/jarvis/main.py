@@ -13,8 +13,9 @@ shared_state = {
 def main_loop(modules, state):
     while True:
         frame = modules["cam"].img_rgb()
-        modules["face_tracker"].process_image(frame)
-        state["camera_display"] = modules["face_tracker"].overlay_tracking(frame)
+        modules["hand_tracker"].process_image(frame)
+        state["camera_display"] = modules["hand_tracker"].overlay_tracking(frame)
+        modules["hand_tracker"].coordinates()
 
         #state["status"]["cam_alive"] = cam.running
         #state["status"]["tracker_alive"] = tracker.running

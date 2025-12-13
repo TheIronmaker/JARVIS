@@ -9,7 +9,8 @@ description = "JARVIS Modular Control System"
 authors = [{name = "Andy"}]
 dependencies = [
     "PySide6",
-    "mediapipe"
+    "mediapipe",
+    "opencv-python"
 ]
 
 [tool.setuptools.packages.find]
