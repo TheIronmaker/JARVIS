@@ -23,6 +23,8 @@ class HandTracker(ThreadedResource):
         self.shape = shape
         self.results = None
         self.Global, self.Local = np.zeros((21, 3)), np.zeros((21, 3))
+        self.centroid, self.rotation_coor, self.rotation_vector = [np.zeros(3) for _ in range(3)]
+
         self.data = self.load_file(name="coordinate_base.json")
     
     def load_file(self, path="jarvis.modules.hand_tracker", name=""):
@@ -38,12 +40,6 @@ class HandTracker(ThreadedResource):
         for lm in self.results.multi_hand_landmarks or []:
             self.mp_draw.draw_landmarks(img, lm, self.mp_hands.HAND_CONNECTIONS)
         return img
-    
-    def angle_3pts(self, a, b, c):
-        ba = a - b
-        bc = c - b
-        cos_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
-        return np.degrees(np.arccos(np.clip(cos_angle, -1.0, 1.0)))
 
     def get_coordinates(self):
         """ Retrieves Global and Local Coordinates """
@@ -54,10 +50,39 @@ class HandTracker(ThreadedResource):
                 # Local Coordinates: Wrist Origin
                 self.Local = self.Global - self.Global[0]
 
-    def calculate_rotation(self):
+    def calculate_Cartesian(self):
+        """ Calculates the palms center and rotation """
+
         # Average of main points into plane/direction
-        pass
-        #points = np.array([[p.x, p.y, p.z] for i, p in enumerate(hand.landmark) if i in indices])
+        points = self.Global[self.data["indices"]] # Retrieval of palm points
+        if np.isnan(points).any(): return None
+        self.centroid = points.mean(axis=0)        # Center point of hand
+
+        p0, p1, p5, p17 = points
+        
+        v1 = p5-p1
+        v2 = p17-p0
+
+        v1_norm = np.linalg.norm(v1)
+        v2_norm = np.linalg.norm(v2)
+        if v1_norm != 0 and v2_norm != 0:
+            v1 /= v1_norm
+            v2 /= v2_norm
+
+            v_avg = (v1 + v2) / 2.0
+            y_axis = v_avg / np.linalg.norm(v_avg)
+
+            coor = np.array([y_axis, [0, 0.0, 0.0], [0, 0.0, 0.0]])
+            coor = np.nan_to_num(coor)
+
+            return render_gizmo(coor, self.shape)
+        return None
+    
+    def angle_3pts(self, a, b, c): # Finger angle
+        ba = a - b
+        bc = c - b
+        cos_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
+        return np.degrees(np.arccos(np.clip(cos_angle, -1.0, 1.0)))
 
     def get_reading(self, version="Global"):
         if version == "Global": target = self.Global

@@ -16,10 +16,11 @@ def main_loop(modules, state):
         frame = modules[0].img_rgb()
         modules[1].process_image(frame)
         modules[1].get_coordinates()
-        overlay = modules[1].get_reading("Local")
+        coordinates_Cartesian = modules[1].calculate_Cartesian()
+        coordinates_overlay = modules[1].get_reading("Local")
 
         state["camera_display"] = modules[1].overlay_tracking(frame)
-        state["camera_tracker"] = {"coordinates_overlay":overlay}
+        state["camera_tracker"] = {"coordinates_overlay":coordinates_overlay, "coordinates_Cartesian":coordinates_Cartesian}
 
 
 

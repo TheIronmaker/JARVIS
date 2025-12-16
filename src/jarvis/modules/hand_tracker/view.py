@@ -1,26 +1,47 @@
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt
 
+from jarvis.app_core.gui_elements import DisplaySlider
 
 class HandTrackerView(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.feed = QLabel()
-        layout = QVBoxLayout(self)
-        layout.addWidget(self.feed)
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+        self.mapping: dict[QLabel, QPixmap | None] = {}
 
-    def update_frame(self, frame):
-        if frame is None: return
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(2)
+
+        self.readout = self.add_feed()
+        self.rotation_coor = self.add_feed()
+        self.slider = DisplaySlider("Axis Rotation", value=40)
+        self.layout.addWidget(self.slider)
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        self.rescale()
+
+    def rescale(self):
+        for label, map in self.mapping.items():
+            if map: label.setPixmap(map.scaled(label.size(), Qt.KeepAspectRatio, Qt.FastTransformation))
+
+    def add_feed(self) -> QLabel:
+        label = QLabel(alignment=Qt.AlignTop | Qt.AlignHCenter)
+        label.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+        self.layout.addWidget(label)
+        self.mapping[label] = None
+        return label
+    
+    def update_frame(self, label: QLabel, frame):
+        if frame is None or label not in self.mapping:
+            return
+        self.mapping[label] = self._frame_to_pixmap(frame)
+        self.rescale()
+
+    @staticmethod
+    def _frame_to_pixmap(frame):
         h, w, ch = frame.shape
-        qt_image = QImage(frame.data, w, h, ch * w, QImage.Format_RGB888)
-        pixmap = QPixmap.fromImage(qt_image)
-        scaled = pixmap.scaled(
-        self.feed.width(),
-        self.feed.height(),
-        Qt.KeepAspectRatio,
-        Qt.FastTransformation)
-        self.feed.setPixmap(scaled)
+        img = QImage(frame.data, w, h, ch * w, QImage.Format_RGB888)
+        return QPixmap.fromImage(img)

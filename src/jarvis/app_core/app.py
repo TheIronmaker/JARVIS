@@ -70,7 +70,8 @@ class MainWindow(QMainWindow):
 
     def update_views(self):
         self.camera_view.update_frame(self.state.get("camera_display"), 12)
-        self.hand_tracker.update_frame(self.state.get("camera_tracker").get("coordinates_overlay"))
+        self.hand_tracker.update_frame(self.hand_tracker.readout, self.state.get("camera_tracker").get("coordinates_overlay"))
+        self.hand_tracker.update_frame(self.hand_tracker.rotation_coor, self.state.get("camera_tracker").get("coordinates_Cartesian"))
 
 def run_app(state):
     app = QApplication(sys.argv)

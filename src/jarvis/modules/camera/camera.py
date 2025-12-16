@@ -29,7 +29,7 @@ class Camera(ThreadedResource):
         else: self.img = img
         return True
 
-    def img_rgb(self):
+    def img_rgb(self): # Move to image processor
         if self.img is not None: return cv2.cvtColor(self.img, cv2.COLOR_BGR2RGB)
         return self.blank
 
