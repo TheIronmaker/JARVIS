@@ -54,9 +54,9 @@ class HandTracker(ThreadedResource):
         """ Calculates the palms center and rotation """
 
         # Average of main points into plane/direction
-        points = self.Global[self.data["indices"]] # Retrieval of palm points
+        points = self.Global[self.data["indices"]]
         if np.isnan(points).any(): return None
-        self.centroid = points.mean(axis=0)        # Center point of hand
+        self.centroid = points.mean(axis=0)
 
         p0, p1, p5, p17 = points
         
@@ -72,9 +72,9 @@ class HandTracker(ThreadedResource):
             v_avg = (v1 + v2) / 2.0
             y_axis = v_avg / np.linalg.norm(v_avg)
 
-            coor = np.array([y_axis, [0, 0.0, 0.0], [0, 0.0, 0.0]])
+            coor = np.array([y_axis, [0, 0, 0], [0, 0, 0]])
             coor = np.nan_to_num(coor)
-
+            
             return render_gizmo(coor, self.shape)
         return None
     
