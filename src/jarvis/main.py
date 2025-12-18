@@ -1,26 +1,70 @@
-import threading
-import time
+from time import sleep
 
+from jarvis.app_core.threading import ThreadedResource
 from jarvis.modules import Camera, HandTracker, FaceTracker
-from jarvis.app_core.app import run_app
+from jarvis.app_core.app import app
 
-shared_state = {
-    "camera_display": None,    # combined frame with overlays
-    "status": {},              # optional thread status info
-    "camera_tracker": {}
-}
+from jarvis.settings import settings
+from jarvis.modules.image_processing import *
+
+class Core(ThreadedResource):
+    def __init__(self):
+        self.settings = settings["main_frame"]
+        super().__init__(self.settings["cycle_time"])
+
+        self.modules = {
+            "camera": Camera(),
+            "hand_tracker": HandTracker(),
+            "face_tracker": FaceTracker()
+        }
+
+        self.data = {name: {} for name in self.modules.keys()}
+
+    def start_modules(self, name=None):
+        if name is None:
+            for name, module in self.modules.items():
+                if settings[name].get("enabled"):
+                    module.start()
+        else:
+            if name in self.modules and settings[name].get("enabled"):
+                self.modules[name].start()
+    
+    def stop_modules(self, name=None):
+        if name is None:
+            for module in self.modules.values():
+                module.stop()
+        else:
+            if name in self.modules:
+                self.modules[name].stop()
+    
+    def loop(self):
+        while self.settings["enabled"]:
+            self.data["camera"]["feed"] = self.modules["camera"].img
+            if self.data["camera"].get("show_output"):
+                self.stop_modules("camera")
+
+            sleep(self.settings["cycle_time"])
+    
+    def close(self):
+        self.stop_modules()
+        self.settings["enabled"] = False
 
 
+# Deprecated function
 def main_loop(modules, state):
     while True:
         frame = modules[0].img_rgb()
         modules[1].process_image(frame)
         modules[1].get_coordinates()
-        coordinates_Cartesian = modules[1].calculate_Cartesian()
-        coordinates_overlay = modules[1].get_reading("Local")
+        modules[1].calculate_cartesian()
 
-        state["camera_display"] = modules[1].overlay_tracking(frame)
-        state["camera_tracker"] = {"coordinates_overlay":coordinates_overlay, "coordinates_Cartesian":coordinates_Cartesian}
+        coordinates_overlay = modules[1].get("Local")
+        slider_value = modules[1].get("Normal", "Palm")
+
+        palm_gizmo = render_gizmo(np.array([modules[1].normal_palm, [0, 0, 0], [0, 0, 0]]), modules[1].shape)
+
+        state["camera"]["feed"] = modules[1].overlay_tracking(frame)
+        state["hand_tracker"] = {"coordinates_overlay":coordinates_overlay, "palm_gizmo":palm_gizmo, "slider_value":slider_value[1]}
 
 
 
@@ -33,23 +77,17 @@ def main_loop(modules, state):
         # state["status"]["tracker_alive"] = tracker.running
 
         # Throttle update timing - to be refined
-        time.sleep(0.01)
+        sleep(0.01)
 
-def main():   
-    cam = Camera()
-    hand_tracker = HandTracker()
-    face_tracker = FaceTracker()
-    modules = [cam, hand_tracker, face_tracker]
+def main():
+    core = Core()
+    core.start()
+    core.start_modules()
 
-    for t in [modules[0]]: t.start()
-
-    main_thread = threading.Thread(target=main_loop, args=(modules, shared_state), daemon=True)
-    main_thread.start()
-
-    run_app(shared_state)
-
-    for t in [modules["cam"]]: t.stop()
-    main_thread.join()
+    if settings["main_frame"]["run_method"] == "app":
+        app(core.data)
+    
+    core.close()
 
 if __name__ == "__main__":
     main()

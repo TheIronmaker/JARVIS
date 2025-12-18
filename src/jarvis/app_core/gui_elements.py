@@ -21,6 +21,6 @@ class DisplaySlider(QWidget):
         
         self.setLayout(layout)
     
-    def set_value(self, value:float, round=2):
+    def set_value(self, value:float, rounding=2):
         self.slider.setValue(int(value))
-        self.value_label.setText(str(round(value, round)))
+        self.value_label.setText(str(round(value, rounding)))

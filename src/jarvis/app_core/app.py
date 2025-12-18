@@ -14,7 +14,7 @@ class MainWindow(QMainWindow):
         self.setDockOptions(QMainWindow.AllowTabbedDocks)
         self.modules = {}
 
-        self.camera_view = CameraView()
+        self.camera_view = CameraView(self)
         self.camera_box = self.create_view(self.camera_view, min_size=(125, 125))
 
         self._build_central()
@@ -23,8 +23,8 @@ class MainWindow(QMainWindow):
             from jarvis.private_tests.finance.view import FinanceWindow
             self.add_dock("finance", FinanceWindow(), dock_area="right")
         
-        self.hand_tracker = HandTrackerView()
-        self.add_dock("hand tracker", self.hand_tracker, dock_area="left", initial_size=500)
+        self.hand_tracker_view = HandTrackerView()
+        self.add_dock("hand tracker", self.hand_tracker_view, dock_area="left", initial_size=500)
 
     def _build_central(self):
         central = QWidget()
@@ -69,11 +69,10 @@ class MainWindow(QMainWindow):
         return view_box
 
     def update_views(self):
-        self.camera_view.update_frame(self.state.get("camera_display"), 12)
-        self.hand_tracker.update_frame(self.hand_tracker.readout, self.state.get("camera_tracker").get("coordinates_overlay"))
-        self.hand_tracker.update_frame(self.hand_tracker.rotation_coor, self.state.get("camera_tracker").get("coordinates_Cartesian"))
+        self.camera_view.update(self.state.get("camera").get("frame", None))
+        self.hand_tracker_view.update(self.state.get("hand_tracker"))
 
-def run_app(state):
+def app(state):
     app = QApplication(sys.argv)
     window = MainWindow(state)
     window.resize(1200, 800)

@@ -1,11 +1,13 @@
 import mediapipe as mp
 
-from jarvis.app_core import logger
+from jarvis.modules.logger import Logger
+from jarvis.settings import *
 from jarvis.app_core.threading import ThreadedResource
 
 
-class FaceTracker(ThreadedResource):
+class FaceTracker(ThreadedResource):    
     def __init__(self, max_faces=1, detection_conf=0.6, tracking_conf=0.6):
+        self.settings = settings["face_tracker"]
         super().__init__()
         self.results = None
         try:
@@ -18,7 +20,11 @@ class FaceTracker(ThreadedResource):
                 min_tracking_confidence=tracking_conf)
         
         except Exception as e:
-            logger.info(f"Could not initialize hand tracking modules: {e}")
+            Logger.info(f"Could not initialize hand tracking modules: {e}")
+    
+    def loop(self):
+        while self.settings["enabled"]:
+            pass
     
     def process_image(self, img):
         if img is None: return None

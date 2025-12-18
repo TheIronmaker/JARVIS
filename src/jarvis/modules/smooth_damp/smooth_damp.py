@@ -59,7 +59,7 @@ class SmoothDampArray:
         self.eps = eps
 
         self.defaults = np.zeros((*size, 4))
-        self.defaults[:, 3] = 0.01
+        self.defaults[..., 3] = 0.01
         self.k = np.zeros((*size, 3))
 
         # Data Columns: [previous_x, y, y_vel, acceleration]
@@ -121,11 +121,11 @@ class SmoothDampArray:
         y += T * y_vel
 
         # Save data
-        self.data[loc, 1:4] = [y, y_vel, acc]
+        self.data[loc, 1:4] = np.stack((y, y_vel, acc), axis=-1)
 
         return y
     
-    def get_state(self, indexes="all", loc: slice | tuple=...):
+    def current(self, indexes="all", loc: slice | tuple=...):
         """Get current state at location(s)"""
         readout = {"xp":0, "y":1, "y_vel":2, "acc":3}
         if isinstance(indexes, str): indexes = [indexes]

@@ -16,7 +16,7 @@ class HandTrackerView(QWidget):
 
         self.readout = self.add_feed()
         self.rotation_coor = self.add_feed()
-        self.slider = DisplaySlider("Axis Rotation", value=40)
+        self.slider = DisplaySlider("Axis Rotation", value=40, min_val=-1, max_val=1)
         self.layout.addWidget(self.slider)
 
     def resizeEvent(self, event):
@@ -33,15 +33,19 @@ class HandTrackerView(QWidget):
         self.layout.addWidget(label)
         self.mapping[label] = None
         return label
-    
-    def update_frame(self, label: QLabel, frame):
-        if frame is None or label not in self.mapping:
-            return
-        self.mapping[label] = self._frame_to_pixmap(frame)
-        self.rescale()
 
     @staticmethod
-    def _frame_to_pixmap(frame):
+    def _frame_to_pixmap(frame): # Move to image_processing
         h, w, ch = frame.shape
         img = QImage(frame.data, w, h, ch * w, QImage.Format_RGB888)
         return QPixmap.fromImage(img)
+    
+    def update(self, data):
+        self.update_frame(self.readout, data.get("coordinates_overlay"))
+        self.update_frame(self.rotation_coor, data.get("palm_gizmo"))
+        self.slider.set_value(data.get("slider_value", 0))
+
+    def update_frame(self, label: QLabel, frame):
+        if frame is None or label not in self.mapping: return
+        self.mapping[label] = self._frame_to_pixmap(frame)
+        self.rescale()
