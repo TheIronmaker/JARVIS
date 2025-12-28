@@ -1,8 +1,8 @@
 import mediapipe as mp
 
-from jarvis.modules.logger import Logger
 from jarvis.settings import *
-from jarvis.app_core.threading import ThreadedResource
+from jarvis.core.logger import Logger
+from jarvis.core.threaded import ThreadedResource
 
 
 class FaceTracker(ThreadedResource):    
@@ -23,7 +23,7 @@ class FaceTracker(ThreadedResource):
             Logger.info(f"Could not initialize hand tracking modules: {e}")
     
     def loop(self):
-        while self.settings["enabled"]:
+        while self.running:
             pass
     
     def process_image(self, img):

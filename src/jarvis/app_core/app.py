@@ -7,9 +7,9 @@ from jarvis.modules.hand_tracker.view import HandTrackerView
 from jarvis.settings import settings
 
 class MainWindow(QMainWindow):
-    def __init__(self, state):
+    def __init__(self, bus):
         super().__init__()
-        self.state = state
+        self.bus = bus
         self.setWindowTitle("JARVIS")
         self.setDockOptions(QMainWindow.AllowTabbedDocks)
         self.modules = {}
@@ -69,8 +69,8 @@ class MainWindow(QMainWindow):
         return view_box
 
     def update_views(self):
-        self.camera_view.update(self.state.get("camera").get("frame", None))
-        self.hand_tracker_view.update(self.state.get("hand_tracker"))
+        pass #self.camera_view.update(self.state.get("camera", {}).get("feed"))
+        #self.hand_tracker_view.update(self.state.get("hand_tracker", {}))
 
 def app(state):
     app = QApplication(sys.argv)
@@ -83,4 +83,4 @@ def app(state):
     timer.timeout.connect(window.update_views)
     timer.start()
 
-    sys.exit(app.exec())
+    app.exec()

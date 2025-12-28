@@ -20,8 +20,9 @@ class CameraView(QWidget):
         self.feed.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         self.feed.setStyleSheet(self.feed.setStyleSheet("QLabel {border-radius: " + str(self.settings["window_radius"]) + "px; background-color: black;}"))
 
-        self.buttons = {"New Feed":QPushButton("Launch Camera Window")}
-        self.buttons["New Feed"].clicked.connect(self.launch_camera)
+        self.buttons = {"Start Camera": QPushButton("Start Camera"), "Stop Camera":QPushButton("Stop Camera")}
+        self.buttons["Start Camera"].clicked.connect(self.start_camera)
+        self.buttons["Stop Camera"].clicked.connect(self.stop_camera)
 
         btn_layout = QHBoxLayout()
         btn_layout.setContentsMargins(0, 0, 0, 0)
@@ -36,12 +37,27 @@ class CameraView(QWidget):
 
     def update(self, frame):
         if frame is None: return False
-        print(frame)
-        qt_image = QImage(frame.data, *frame.shape[:2], frame.strides[0], QImage.Format_RGB888)
+        
+        # Ensures frame is unbroken before updating - Threading issue
+        frame = np.ascontiguousarray(frame)
+        
+        height, width = frame.shape[:2]
+        
+        # Create QImage by converting from numpy array
+        qt_image = QImage(frame.tobytes(), width, height, 3 * width, QImage.Format_RGB888)
+        
+        # Make a copy so it doesn't reference the original array
+        qt_image = qt_image.copy()
+
         pixmap = QPixmap.fromImage(qt_image).scaledToWidth(self.feed.width(), Qt.FastTransformation)
         self.feed.setPixmap(round_pixmap(pixmap, 12))
         return True
     
-    def launch_camera(self):
-        self.parent.state["camera"]["show_output"] = True
-        print("Starting Camera")
+    def start_camera(self):
+        self.parent.bus.publish("camera.start", True)
+        print("Camera Starting")
+    
+    def stop_camera(self):
+        if self.parent.bus.get("camera"):
+            self.parent.bus.publish("camera.stop", True)
+        print("Stopping Camera")

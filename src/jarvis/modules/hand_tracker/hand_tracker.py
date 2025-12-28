@@ -2,10 +2,10 @@ import mediapipe as mp
 import numpy as np
 from time import sleep
 
-from jarvis.modules.logger import Logger
 from jarvis.settings import *
+from jarvis.core.logger import Logger
+from jarvis.core.threaded import ThreadedResource
 from jarvis.modules import data_handler
-from jarvis.app_core.threading import ThreadedResource
 from jarvis.modules.image_processing import *
 from jarvis.modules.smooth_damp import SmoothDampArray
 
@@ -19,9 +19,10 @@ class HandTracker(ThreadedResource):
                Depth is BGR
     """
 
-    def __init__(self, max_hands=2, detection_conf=0.6, tracking_conf=0.6, shape=(1080, 1920, 3), fov=12):
+    def __init__(self, bus, max_hands=2, detection_conf=0.6, tracking_conf=0.6, shape=(1080, 1920, 3), fov=12):
         self.settings = settings["hand_tracker"]
-        super().__init__()
+        super().__init__(self.settings["cycle_time"])
+        self.bus = bus
 
         # Hand Tracking defaults and Objects
         try:
@@ -43,18 +44,22 @@ class HandTracker(ThreadedResource):
         self.math = Math(self)
     
     def loop(self):
-        while self.settings["enabled"]:
-            self.results = self.hands.process(self.img)
+        while self.running:
+            try:
+                self.results = self.hands.process(self.img)
+            except Exception as e:
+                Logger.info(f"Could not process hand tracking: {e}")
 
             self.math.Global = self.get_coordinates()
 
             if self.settings["data_smoothing"]["enable"]:
-                self.math.SD.next()
+                self.math.Global = self.math.SD.next(self.math.Global)
             
             self.math.calc_local()
             self.math.calc_cartesian()
+            #print(self.math.centroid)
 
-            sleep(self.settings["cycle_time"])
+            self.cycle_sleep()
 
     def overlay_tracking(self, img):
         if self.results is None or img is None: return img
@@ -64,6 +69,7 @@ class HandTracker(ThreadedResource):
 
     def get_coordinates(self):
         """ Retrieves Global and Local Coordinates """
+        if self.results is None: return self.array
         if self.results.multi_hand_landmarks:
             for _, hand in enumerate(self.results.multi_hand_landmarks):
                 self.array = np.array([[p.x, p.y, p.z] for p in hand.landmark])
@@ -78,9 +84,9 @@ class Math:
         self.config = data_handler.load_json(path="jarvis.modules.hand_tracker", name="coordinate_base.json")
 
         self.Global, self.Local = parent.array, parent.array
-        if self.parent.settings["data_smoothing"]["enable"]:
+        if self.parent.settings.get("data_smoothing", {}).get("enable"):
             self.SD = SmoothDampArray(self.shape)
-            self.SD.update_defaults(*self.parent.settings["data_smoothing"]["defaults"])
+            self.SD.update_defaults(*self.parent.settings.get("data_smoothing", {}).get("defaults"))
 
         self.centroid, self.rotation_coor, self.normal_palm = [np.zeros(3) for _ in range(3)]
 
@@ -103,8 +109,8 @@ class Math:
         ab_norm = np.linalg.norm(ab)
         cd_norm = np.linalg.norm(cd)
         if ab_norm != 0 and cd_norm != 0:
-            v1 /= ab_norm
-            v2 /= cd_norm
+            ab /= ab_norm
+            cd /= cd_norm
 
             v_avg = (ab + cd) / 2.0
             y_axis = v_avg / np.linalg.norm(v_avg)

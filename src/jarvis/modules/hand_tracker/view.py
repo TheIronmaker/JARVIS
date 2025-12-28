@@ -44,6 +44,7 @@ class HandTrackerView(QWidget):
         self.update_frame(self.readout, data.get("coordinates_overlay"))
         self.update_frame(self.rotation_coor, data.get("palm_gizmo"))
         self.slider.set_value(data.get("slider_value", 0))
+        print("Update Tracker")
 
     def update_frame(self, label: QLabel, frame):
         if frame is None or label not in self.mapping: return

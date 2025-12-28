@@ -2,14 +2,16 @@ import cv2
 import numpy as np
 from time import sleep
 
-from jarvis.modules.logger import Logger
 from jarvis.settings import *
-from jarvis.app_core.threading import ThreadedResource
+from jarvis.core.logger import Logger
+from jarvis.core.threaded import ThreadedResource
 
 class Camera(ThreadedResource):    
-    def __init__(self):
+    def __init__(self, bus, name="camera"):
         self.settings = settings["camera"]
         super().__init__(self.settings["cycle_time"])
+        self.bus = bus
+        self.name = name
 
         self.blank = 100 * np.ones((480, 640, 3), dtype=np.uint8)
         self.img = self.blank.copy()
@@ -18,15 +20,21 @@ class Camera(ThreadedResource):
         except: Logger.error("Could not open camera")
     
     def loop(self):
-        while self.enabled:
+        while self.running:
             self.capture_image()
+            self.bus.publish("camera.frame", self.img)
 
-            if self.settings.get("show_output"):
-                self.show_output(self.img)
+            if self.settings.get("show_output"): # To change to bus driven
+                self.show_output()
             
-            sleep(self.settings["cycle_time"])
-        
-        self.close()
+            self.cycle_sleep()
+    
+    def close(self):
+        if self.cap:
+            self.cap.release()
+            self.cap = None
+        print("Release")
+        cv2.destroyAllWindows()
     
     def capture_image(self, y_flip=True, color_flip=True):
         success, img = self.cap.read()
@@ -50,11 +58,8 @@ class Camera(ThreadedResource):
             Logger.error(f"Unable to display image: {e}")
             return False
 
+    # NOT FINISHED
     def on_key_press(self, key):
         if key == "ESC":
             if cv2.waitKey(1) & 0xFF == 27:
-                self.close()
-
-    def close(self):
-        self.cap.release()
-        #cv2.destroyAllWindows()
+                self.stop()

@@ -15,11 +15,11 @@
     "window_radius":12
     },
 "hand_tracker":{
-    "enabled":false,
-    "enable_view":false,
+    "enabled":true,
+    "enable_view":true,
     "cycle_time":0.33,
     "data_smoothing":{
-        "enable":true,
+        "enable":false,
         "defaults":[10, 1, 0]
     }
 },
