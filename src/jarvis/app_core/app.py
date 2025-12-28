@@ -23,7 +23,7 @@ class MainWindow(QMainWindow):
             from jarvis.private_tests.finance.view import FinanceWindow
             self.add_dock("finance", FinanceWindow(), dock_area="right")
         
-        self.hand_tracker_view = HandTrackerView()
+        self.hand_tracker_view = HandTrackerView(self)
         self.add_dock("hand tracker", self.hand_tracker_view, dock_area="left", initial_size=500)
 
     def _build_central(self):
@@ -69,8 +69,8 @@ class MainWindow(QMainWindow):
         return view_box
 
     def update_views(self):
-        pass #self.camera_view.update(self.state.get("camera", {}).get("feed"))
-        #self.hand_tracker_view.update(self.state.get("hand_tracker", {}))
+        self.camera_view.update()
+        self.hand_tracker_view.update()
 
 def app(state):
     app = QApplication(sys.argv)

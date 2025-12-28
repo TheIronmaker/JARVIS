@@ -23,17 +23,14 @@ class Camera(ThreadedResource):
         while self.running:
             self.capture_image()
             self.bus.publish("camera.frame", self.img)
-
-            if self.settings.get("show_output"): # To change to bus driven
-                self.show_output()
             
             self.cycle_sleep()
     
     def close(self):
+        self.bus.publish(self.name + ".frame", None)
         if self.cap:
             self.cap.release()
             self.cap = None
-        print("Release")
         cv2.destroyAllWindows()
     
     def capture_image(self, y_flip=True, color_flip=True):
@@ -46,7 +43,7 @@ class Camera(ThreadedResource):
         self.img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) if color_flip else img
         return self.img
 
-    def show_output(self, img=None):
+    def show_output(self, img=None): # To be completely changed | It's a separate process camera viewer
         display_img = img or self.img
         if display_img is None:
             Logger.warning("Image Viewer active with no camera to show")
@@ -62,4 +59,4 @@ class Camera(ThreadedResource):
     def on_key_press(self, key):
         if key == "ESC":
             if cv2.waitKey(1) & 0xFF == 27:
-                self.stop()
+                self.stop_thread()

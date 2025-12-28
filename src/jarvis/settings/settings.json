@@ -17,9 +17,9 @@
 "hand_tracker":{
     "enabled":true,
     "enable_view":true,
-    "cycle_time":0.33,
+    "cycle_time":0.01,
     "data_smoothing":{
-        "enable":false,
+        "enable":true,
         "defaults":[10, 1, 0]
     }
 },

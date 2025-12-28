@@ -5,8 +5,9 @@ from PySide6.QtCore import Qt
 from jarvis.app_core.gui_elements import DisplaySlider
 
 class HandTrackerView(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         super().__init__(parent)
+        self.parent = parent
 
         self.mapping: dict[QLabel, QPixmap | None] = {}
 
@@ -40,11 +41,10 @@ class HandTrackerView(QWidget):
         img = QImage(frame.data, w, h, ch * w, QImage.Format_RGB888)
         return QPixmap.fromImage(img)
     
-    def update(self, data):
-        self.update_frame(self.readout, data.get("coordinates_overlay"))
-        self.update_frame(self.rotation_coor, data.get("palm_gizmo"))
-        self.slider.set_value(data.get("slider_value", 0))
-        print("Update Tracker")
+    def update(self):
+        self.update_frame(self.readout, self.parent.bus.get("hand_tracker.coordinates_overlay"))
+        self.update_frame(self.rotation_coor, self.parent.bus.get("hand_tracker.palm_gizmo"))
+        self.slider.set_value(self.parent.bus.get("hand_tracker.slider_value", 0))
 
     def update_frame(self, label: QLabel, frame):
         if frame is None or label not in self.mapping: return

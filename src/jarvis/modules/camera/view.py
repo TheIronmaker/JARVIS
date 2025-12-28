@@ -6,7 +6,7 @@ from jarvis.modules.image_processing import *
 from jarvis.settings import settings
 
 class CameraView(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent):
         self.settings = settings["camera"]
         super().__init__(parent)
         self.parent = parent
@@ -35,7 +35,8 @@ class CameraView(QWidget):
         layout.addLayout(btn_layout)
         self.setLayout(layout)
 
-    def update(self, frame):
+    def update(self):
+        frame = self.parent.bus.get("hand_tracking.frame", None)
         if frame is None: return False
         
         # Ensures frame is unbroken before updating - Threading issue
@@ -54,10 +55,9 @@ class CameraView(QWidget):
         return True
     
     def start_camera(self):
-        self.parent.bus.publish("camera.start", True)
+        self.parent.bus.publish("camera.create", True)
         print("Camera Starting")
     
     def stop_camera(self):
-        if self.parent.bus.get("camera"):
-            self.parent.bus.publish("camera.stop", True)
+        self.parent.bus.publish("camera.destruct", True)
         print("Stopping Camera")

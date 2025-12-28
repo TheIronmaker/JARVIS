@@ -22,33 +22,20 @@ class Core(ThreadedResource):
 
     def loop(self):
         while self.running:
-            sleep(self.settings["cycle_time"])
 
+            if self.bus.get("camera.create"):
+                self.modules.create("camera", Camera)
+                self.modules.start_mod("camera")
+                self.bus.publish("camera.create", False)
 
-    def OLDloop(self):
-        while self.running:
-
-            if self.modules.get("camera"):
-                self.data["camera"]["feed"] = self.modules["camera"].img
-
-            if self.data.get("camera") and self.data["camera"].get("stop_camera"):
-                self.data["camera"]["stop_camera"] = False
-                self.stop_modules("camera")
-
-            if self.data.get("camera") and self.data["camera"].get("start_camera"):
-                self.data["camera"]["start_camera"] = False
-
-                self.modules["camera"] = Camera(self.bus)
-                self.start_modules("camera")
-            
-            if self.modules.get("camera"):
-                self.modules["hand_tracker"].img = self.modules["camera"].img
-            
-            sleep(self.settings["cycle_time"])
+            if self.bus.get("camera.destruct", False) and self.modules.exists("camera"):
+                self.modules.destruct("camera")
+                self.bus.publish("camera.destruct", False)
+ 
+            self.cycle_sleep()
     
     def close(self):
-        self.modules.stop()
-
+        self.modules.stop_mod()
 
 # Deprecated function
 def main_loop(modules, state):
@@ -66,30 +53,17 @@ def main_loop(modules, state):
         state["camera"]["feed"] = modules[1].overlay_tracking(frame)
         state["hand_tracker"] = {"coordinates_overlay":coordinates_overlay, "palm_gizmo":palm_gizmo, "slider_value":slider_value[1]}
 
-
-
-        # # Face Tracking
-        # modules[2].process_image(frame)
-        # state["camera_display"] = modules[2].overlay_tracking(frame)
-
-        # # For status panel
-        # state["status"]["cam_alive"] = cam.running
-        # state["status"]["tracker_alive"] = tracker.running
-
-        # Throttle update timing - to be refined
-        sleep(0.01)
-
 def main():
     bus = DataBus()
     core = Core(bus)
-    core.start()
-    core.modules.start()
+    core.start_thread()
+    core.modules.start_mod()
 
     if settings["main_frame"]["run_method"] == "app":
         app(bus)
     
     # Stops main program after application closes. Can be left out to keep main thread running.
-    core.stop()
+    core.stop_thread()
 
 if __name__ == "__main__":
     main()

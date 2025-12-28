@@ -1,6 +1,5 @@
 import mediapipe as mp
 import numpy as np
-from time import sleep
 
 from jarvis.settings import *
 from jarvis.core.logger import Logger
@@ -19,7 +18,7 @@ class HandTracker(ThreadedResource):
                Depth is BGR
     """
 
-    def __init__(self, bus, max_hands=2, detection_conf=0.6, tracking_conf=0.6, shape=(1080, 1920, 3), fov=12):
+    def __init__(self, bus, max_hands=2, detection_conf=0.6, tracking_conf=0.8, shape=(1080, 1920, 3), fov=12):
         self.settings = settings["hand_tracker"]
         super().__init__(self.settings["cycle_time"])
         self.bus = bus
@@ -38,17 +37,15 @@ class HandTracker(ThreadedResource):
         # Variables
         self.shape = shape if len(shape) == 3 else (*shape, 3)
         self.fov = fov
-        self.img = np.zeros(self.shape, dtype=np.uint8)
         self.results = None
         self.array = np.zeros((21, 3))
         self.math = Math(self)
     
     def loop(self):
         while self.running:
-            try:
-                self.results = self.hands.process(self.img)
-            except Exception as e:
-                Logger.info(f"Could not process hand tracking: {e}")
+            self.process(self.bus.get("camera.frame", None))
+            img = self.overlay_tracking(self.bus.get("camera.frame", None))
+            self.bus.publish("hand_tracking.frame", img)
 
             self.math.Global = self.get_coordinates()
 
@@ -57,12 +54,20 @@ class HandTracker(ThreadedResource):
             
             self.math.calc_local()
             self.math.calc_cartesian()
-            #print(self.math.centroid)
 
             self.cycle_sleep()
 
+    def process(self, img):
+        if img is None:
+            self.results = None
+            return
+        try:
+            self.results = self.hands.process(img) or self.results
+        except Exception as e:
+            Logger.info(f"Could not process hand tracking: {e}")
+
     def overlay_tracking(self, img):
-        if self.results is None or img is None: return img
+        if self.results is None or img is None: return None
         for lm in self.results.multi_hand_landmarks or []:
             self.mp_draw.draw_landmarks(img, lm, self.mp_hands.HAND_CONNECTIONS)
         return img

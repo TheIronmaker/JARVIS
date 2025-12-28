@@ -1,7 +1,6 @@
 import threading
 from time import sleep
 
-from jarvis.settings import settings
 from jarvis.core.logger import Logger
 
 class ThreadedResource:
@@ -21,14 +20,14 @@ class ThreadedResource:
     def cycle_sleep(self):
         sleep(self.cycle_time)
 
-    def start(self):
+    def start_thread(self):
         if self.thread is None or not self.thread.is_alive():
             self.running = True
             self.stop_event.clear()
             self.thread = threading.Thread(target=self.loop)
             self.thread.start()
 
-    def stop(self):
+    def stop_thread(self):
         self.running = False
 
         if self.thread and self.thread != threading.current_thread():
