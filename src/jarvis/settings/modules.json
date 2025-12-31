@@ -1,0 +1,36 @@
+{
+"module_manager": {
+    "type": "module_manager",
+    "name": "module_manager",
+    "enabled": true
+},
+"instances":[
+    {
+        "type": "camera",
+        "name": "main_camera",
+        "enabled": true,
+        "overrides": {
+            "cycle_time": 0.01
+        }
+    },
+    {
+        "type": "hand_tracker",
+        "name": "hand_tracker",
+        "enabled": true,
+        "overrides": {
+            "data_smoothing": {
+                "enabled": true,
+                "defaults": [5, 0.5, 0]
+            }
+        }
+    },
+    {
+        "type": "face_tracker",
+        "name": "face_tracker",
+        "enabled": false,
+        "overrides": {
+            "cycle_time":0.33
+        }
+    }
+]
+}

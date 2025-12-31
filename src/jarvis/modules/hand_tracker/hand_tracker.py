@@ -1,7 +1,6 @@
 import mediapipe as mp
 import numpy as np
 
-from jarvis.settings import *
 from jarvis.core.logger import Logger
 from jarvis.core.threaded import ThreadedResource
 from jarvis.modules import data_handler
@@ -12,16 +11,19 @@ class HandTracker(ThreadedResource):
     """Handles hand tracking with sub-class Math for calculations.
     
     Args:
+        name: 
         max_hands: Max number of tracked hands
         detection_conf: Confidence in tracking
         shape: Acceptable formats: (width, height) or (width, height, depth)
                Depth is BGR
     """
 
-    def __init__(self, bus, max_hands=2, detection_conf=0.6, tracking_conf=0.8, shape=(1080, 1920, 3), fov=12):
-        self.settings = settings["hand_tracker"]
+    def __init__(self, bus, settings, max_hands=2, detection_conf=0.6, tracking_conf=0.8, shape=(1080, 1920, 3), fov=12, name="hand_tracker"):
+        self.settings = settings
         super().__init__(self.settings["cycle_time"])
-        self.bus = bus
+        self.bus_global = bus
+        self.bus = bus.namespaced(name)
+        self.name = name
 
         # Hand Tracking defaults and Objects
         try:
@@ -40,22 +42,47 @@ class HandTracker(ThreadedResource):
         self.results = None
         self.array = np.zeros((21, 3))
         self.math = Math(self)
+
+        # Subscribe Functions
+        self.bus_global.subscribe("camera.frame", self.main_process)
     
-    def loop(self):
+    def OLDloop(self):
         while self.running:
-            self.process(self.bus.get("camera.frame", None))
-            img = self.overlay_tracking(self.bus.get("camera.frame", None))
-            self.bus.publish("hand_tracking.frame", img)
+            self.process(self.bus_global.get("camera.frame"))
 
-            self.math.Global = self.get_coordinates()
+            if self.settings["render_hands"]:
+                img = self.overlay_tracking(self.bus_global.get("camera.frame", None))
+                self.bus.publish("frame", img)
 
-            if self.settings["data_smoothing"]["enable"]:
-                self.math.Global = self.math.SD.next(self.math.Global)
+            self.math.data["global"] = self.get_coordinates()
+
+            if self.math.settings["data_smoothing"]["enable"]:
+                self.math.data["global"] = self.math.SD.next(self.math.data["global"])
             
             self.math.calc_local()
             self.math.calc_cartesian()
+            self.bus.publish("coordinates_overlay", self.math.readout("local"))
+
+            self.bus.publish_many(self.math.data)
 
             self.cycle_sleep()
+        
+    def main_process(self):
+        frame = self.bus_global.get("camera.frame")
+        self.process(frame)
+
+        if self.settings["render_hands"]:
+            self.bus.publish("frame", self.overlay_tracking(frame))
+        
+        self.math.data["global"] = self.get_coordinates()
+
+        if self.settings["data_smoothing"]["enabled"]:
+            self.math.SD.next(self.math.data["global"], update=True)
+        
+        self.math.calc_local()
+        self.math.calc_cartesian()
+        self.bus.publish("coordinates_overlay", self.math.readout("local"))
+        self.bus.publish_many(self.math.data)
 
     def process(self, img):
         if img is None:
@@ -64,7 +91,7 @@ class HandTracker(ThreadedResource):
         try:
             self.results = self.hands.process(img) or self.results
         except Exception as e:
-            Logger.info(f"Could not process hand tracking: {e}")
+            Logger.info(f"Could not process image for hand tracking: {e}")
 
     def overlay_tracking(self, img):
         if self.results is None or img is None: return None
@@ -88,23 +115,28 @@ class Math:
 
         self.config = data_handler.load_json(path="jarvis.modules.hand_tracker", name="coordinate_base.json")
 
-        self.Global, self.Local = parent.array, parent.array
-        if self.parent.settings.get("data_smoothing", {}).get("enable"):
+        self.data = {
+            "global":np.zeros(self.shape),
+            "local":np.zeros(self.shape),
+            "centroid":np.zeros(3),
+            "rotation_coor":np.zeros(3),
+            "palm_normal":np.zeros(3)
+        }
+
+        if self.parent.settings.get("data_smoothing", {}).get("enabled"):
             self.SD = SmoothDampArray(self.shape)
             self.SD.update_defaults(*self.parent.settings.get("data_smoothing", {}).get("defaults"))
 
-        self.centroid, self.rotation_coor, self.normal_palm = [np.zeros(3) for _ in range(3)]
-
     def calc_local(self):
-        self.Local = self.Global - self.Global[0]
+        self.data["local"] = self.data["global"] - self.data["global"][0]
 
     def calc_cartesian(self):
         """ Calculates the palms center and rotation """
 
         # Average of main points into plane/direction
-        points = self.Global[self.config["indices"]]
+        points = self.data["global"][self.config["indices"]]
         if np.isnan(points).any(): return None
-        self.centroid = points.mean(axis=0)
+        self.data["centroid"] = points.mean(axis=0)
 
         a, b, c, d = points
         
@@ -121,7 +153,7 @@ class Math:
             y_axis = v_avg / np.linalg.norm(v_avg)
 
             # Needs to tell which side is up
-            self.normal_palm = np.nan_to_num(y_axis)
+            self.data["palm_normal"] = np.nan_to_num(y_axis)
     
     def angle_3pts(self, a, b, c): # Finger angle - maybe combine for palm vectors?
         ba = a - b
@@ -129,13 +161,11 @@ class Math:
         cos_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
         return np.degrees(np.arccos(np.clip(cos_angle, -1.0, 1.0)))
 
-    def readout(self, version=None):
-        if version is None: return False
-        if version == "Global": target = self.Global
-        elif version == "Local": target = self.Local
+    def readout(self, version:str=""):
+        if version == "": return False
 
         readout = []
-        for p, (x, y, z) in enumerate(target):
+        for p, (x, y, z) in enumerate(self.data[version]):
             coords = [int(v) for v in [x, y, z]]
             pads = [" " * abs(4 - len(str(c))) for c in coords]
             readout.append(f"X: {coords[0]},{pads[0]} Y: {coords[1]},{pads[1]} Z: {coords[2]},{pads[2]} | Point ID: {p}")

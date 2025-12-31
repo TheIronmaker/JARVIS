@@ -2,6 +2,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, Q
 from PySide6.QtCore import Qt, QTimer
 import sys
 
+from jarvis.core.module_manager import view
 from jarvis.modules.camera.view import CameraView
 from jarvis.modules.hand_tracker.view import HandTrackerView
 from jarvis.settings import settings
@@ -10,6 +11,7 @@ class MainWindow(QMainWindow):
     def __init__(self, bus):
         super().__init__()
         self.bus = bus
+        self.settings = {}
         self.setWindowTitle("JARVIS")
         self.setDockOptions(QMainWindow.AllowTabbedDocks)
         self.modules = {}
@@ -19,7 +21,7 @@ class MainWindow(QMainWindow):
 
         self._build_central()
 
-        if settings["private_tests"]:
+        if self.settings.get("private_tests"):
             from jarvis.private_tests.finance.view import FinanceWindow
             self.add_dock("finance", FinanceWindow(), dock_area="right")
         
@@ -69,7 +71,7 @@ class MainWindow(QMainWindow):
         return view_box
 
     def update_views(self):
-        self.camera_view.update()
+        self.camera_view.update(self.bus.get("hand_tracking.frame", self.bus.get("camera.frame")))
         self.hand_tracker_view.update()
 
 def app(state):

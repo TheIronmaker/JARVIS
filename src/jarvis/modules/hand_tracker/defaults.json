@@ -1,0 +1,13 @@
+{
+    "type": "hand_tracker",
+    "enabled": true,
+    "cycle_time": 0.03,
+    "render_hands": false,
+    "data_smoothing": {
+        "enabled": true,
+        "defaults": [5, 0.5, 0]
+    },
+    "view": {
+        
+    }
+}

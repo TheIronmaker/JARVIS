@@ -1,0 +1,8 @@
+{
+    "type": "camera",
+    "enabled": true,
+    "cycle_time": 0.03,
+    "view": {
+        "window_radius":12
+    }
+}

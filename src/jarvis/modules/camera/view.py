@@ -7,9 +7,10 @@ from jarvis.settings import settings
 
 class CameraView(QWidget):
     def __init__(self, parent):
-        self.settings = settings["camera"]
+        self.settings = settings.load("defaults", paths=["modules/camera"]).get("view", {})
         super().__init__(parent)
         self.parent = parent
+        self.bus = parent.bus.namespaced("camera_view")
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
@@ -18,7 +19,7 @@ class CameraView(QWidget):
         self.feed = QLabel("No feed")
         self.feed.setAlignment(Qt.AlignCenter)
         self.feed.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.feed.setStyleSheet(self.feed.setStyleSheet("QLabel {border-radius: " + str(self.settings["window_radius"]) + "px; background-color: black;}"))
+        self.feed.setStyleSheet(self.feed.setStyleSheet("QLabel {border-radius: " + str(self.settings.get("window_radius", 12)) + "px; background-color: black;}"))
 
         self.buttons = {"Start Camera": QPushButton("Start Camera"), "Stop Camera":QPushButton("Stop Camera")}
         self.buttons["Start Camera"].clicked.connect(self.start_camera)
@@ -35,22 +36,15 @@ class CameraView(QWidget):
         layout.addLayout(btn_layout)
         self.setLayout(layout)
 
-    def update(self):
-        frame = self.parent.bus.get("hand_tracking.frame", None)
+    def update(self, frame):
         if frame is None: return False
         
         # Ensures frame is unbroken before updating - Threading issue
         frame = np.ascontiguousarray(frame)
-        
         height, width = frame.shape[:2]
-        
-        # Create QImage by converting from numpy array
         qt_image = QImage(frame.tobytes(), width, height, 3 * width, QImage.Format_RGB888)
-        
-        # Make a copy so it doesn't reference the original array
-        qt_image = qt_image.copy()
+        pixmap = QPixmap.fromImage(qt_image.copy()).scaledToWidth(self.feed.width(), Qt.FastTransformation)
 
-        pixmap = QPixmap.fromImage(qt_image).scaledToWidth(self.feed.width(), Qt.FastTransformation)
         self.feed.setPixmap(round_pixmap(pixmap, 12))
         return True
     

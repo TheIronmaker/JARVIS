@@ -90,7 +90,7 @@ class SmoothDampArray:
         
         if update_k: self.update_k(loc=loc)
 
-    def next(self, x, x_vel=None, loc: slice | tuple=...):
+    def next(self, x, x_vel=None, loc: slice | tuple=..., update=False):
         """
         Update smooth damp at location(s)
         Args:
@@ -123,6 +123,8 @@ class SmoothDampArray:
         # Save data
         self.data[loc, 1:4] = np.stack((y, y_vel, acc), axis=-1)
 
+        if update:
+            x = y
         return y
     
     def current(self, indexes="all", loc: slice | tuple=...):

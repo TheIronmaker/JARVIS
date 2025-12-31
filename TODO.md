@@ -21,3 +21,5 @@ Logging should have verbose version
 Logging should have calling setting for verbose level/where the message goes. To screen log, just text, or only internal logs (again, what level of internal logs?)
 
 Add state machine for module life-cycles
+
+ID system for devices

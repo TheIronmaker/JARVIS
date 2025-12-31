@@ -4,28 +4,24 @@ from jarvis.settings import settings
 from jarvis.core.threaded import ThreadedResource
 from jarvis.core.databus import DataBus
 from jarvis.core.module_manager import ModuleManager
-from jarvis.modules import Camera, HandTracker, FaceTracker
 from jarvis.modules.image_processing import *
 from jarvis.app_core.app import app
 
 class Core(ThreadedResource):
     def __init__(self, bus):
         self.bus = bus
-        self.settings = settings["main_frame"]
+        self.settings = settings.load("core", ["settings"])
         super().__init__(self.settings["cycle_time"])
 
         self.modules = ModuleManager(bus)
-        self.modules.bulk_create({
-            "camera": Camera,
-            "hand_tracker": HandTracker
-        }) # Face Tracker
+        self.modules.load_modules()
 
     def loop(self):
         while self.running:
 
             if self.bus.get("camera.create"):
-                self.modules.create("camera", Camera)
-                self.modules.start_mod("camera")
+                self.modules.create("camera")
+                self.modules.start_module("camera")
                 self.bus.publish("camera.create", False)
 
             if self.bus.get("camera.destruct", False) and self.modules.exists("camera"):
@@ -57,9 +53,9 @@ def main():
     bus = DataBus()
     core = Core(bus)
     core.start_thread()
-    core.modules.start_mod()
+    core.modules.start_modules()
 
-    if settings["main_frame"]["run_method"] == "app":
+    if core.settings.get("run_method") == "app":
         app(bus)
     
     # Stops main program after application closes. Can be left out to keep main thread running.

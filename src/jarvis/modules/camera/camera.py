@@ -2,16 +2,14 @@ import cv2
 import numpy as np
 from time import sleep
 
-from jarvis.settings import *
 from jarvis.core.logger import Logger
 from jarvis.core.threaded import ThreadedResource
 
 class Camera(ThreadedResource):    
-    def __init__(self, bus, name="camera"):
-        self.settings = settings["camera"]
-        super().__init__(self.settings["cycle_time"])
-        self.bus = bus
-        self.name = name
+    def __init__(self, bus, settings):
+        super().__init__(settings.get("cycle_time"))
+        self.bus = bus.namespaced(settings.get("name"))
+        self.settings = settings
 
         self.blank = 100 * np.ones((480, 640, 3), dtype=np.uint8)
         self.img = self.blank.copy()
@@ -22,12 +20,12 @@ class Camera(ThreadedResource):
     def loop(self):
         while self.running:
             self.capture_image()
-            self.bus.publish("camera.frame", self.img)
+            self.bus.publish("frame", self.img)
             
             self.cycle_sleep()
     
     def close(self):
-        self.bus.publish(self.name + ".frame", None)
+        self.bus.publish("frame", None)
         if self.cap:
             self.cap.release()
             self.cap = None
