@@ -71,7 +71,7 @@ class MainWindow(QMainWindow):
         return view_box
 
     def update_views(self):
-        self.camera_view.update(self.bus.get("hand_tracking.frame", self.bus.get("camera.frame")))
+        self.camera_view.update(self.bus.get("hand_tracker.frame"))
         self.hand_tracker_view.update()
 
 def app(state):

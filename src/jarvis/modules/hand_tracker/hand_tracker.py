@@ -2,12 +2,11 @@ import mediapipe as mp
 import numpy as np
 
 from jarvis.core.logger import Logger
-from jarvis.core.threaded import ThreadedResource
 from jarvis.modules import data_handler
 from jarvis.modules.image_processing import *
 from jarvis.modules.smooth_damp import SmoothDampArray
 
-class HandTracker(ThreadedResource):
+class HandTracker:
     """Handles hand tracking with sub-class Math for calculations.
     
     Args:
@@ -18,12 +17,10 @@ class HandTracker(ThreadedResource):
                Depth is BGR
     """
 
-    def __init__(self, bus, settings, max_hands=2, detection_conf=0.6, tracking_conf=0.8, shape=(1080, 1920, 3), fov=12, name="hand_tracker"):
-        self.settings = settings
-        super().__init__(self.settings["cycle_time"])
+    def __init__(self, bus, settings, max_hands=2, detection_conf=0.6, tracking_conf=0.8, shape=(1080, 1920, 3), fov=12):
         self.bus_global = bus
-        self.bus = bus.namespaced(name)
-        self.name = name
+        self.bus = bus.namespaced(settings.get("name"))
+        self.settings = settings
 
         # Hand Tracking defaults and Objects
         try:
@@ -46,29 +43,10 @@ class HandTracker(ThreadedResource):
         # Subscribe Functions
         self.bus_global.subscribe("camera.frame", self.main_process)
     
-    def OLDloop(self):
-        while self.running:
-            self.process(self.bus_global.get("camera.frame"))
+    def main_process(self, frame):
+        if frame is None: return False
+        frame = frame.copy()
 
-            if self.settings["render_hands"]:
-                img = self.overlay_tracking(self.bus_global.get("camera.frame", None))
-                self.bus.publish("frame", img)
-
-            self.math.data["global"] = self.get_coordinates()
-
-            if self.math.settings["data_smoothing"]["enable"]:
-                self.math.data["global"] = self.math.SD.next(self.math.data["global"])
-            
-            self.math.calc_local()
-            self.math.calc_cartesian()
-            self.bus.publish("coordinates_overlay", self.math.readout("local"))
-
-            self.bus.publish_many(self.math.data)
-
-            self.cycle_sleep()
-        
-    def main_process(self):
-        frame = self.bus_global.get("camera.frame")
         self.process(frame)
 
         if self.settings["render_hands"]:

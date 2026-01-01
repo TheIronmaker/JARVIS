@@ -36,7 +36,7 @@ class Settings:
             Logger.error(f"Invalid JSON in {entry}: {e}")
             return {}
         except Exception as e:
-            Logger.error(f"Could not load {entry}: {e}")
+            Logger.error(f"Settings could not load {entry}")
             return {}
         
     @staticmethod

@@ -1,6 +1,8 @@
 import threading
 from collections import defaultdict
 
+from jarvis.core.logger import Logger
+
 class DataBus:
     def __init__(self):
         self._data = {}
@@ -12,7 +14,10 @@ class DataBus:
             self._data[topic] = value
             subs = list(self._subs[topic])
         for callback in subs:
-            callback(value)
+            try:
+                callback(value)
+            except Exception as e:
+                Logger.error(f"Automatic function failed to run: {callback.__name__} with Exception: {e}")
     
     def publish_many(self, data:dict):
         for topic, value in data.items():

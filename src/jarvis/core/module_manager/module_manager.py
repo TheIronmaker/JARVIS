@@ -45,17 +45,17 @@ class ModuleManager:
         config = (defaults.copy() if config is None else settings.merge_settings(defaults, config))
         
         try:
-            instance = cls(self.bus, settings=config)
+            instance = cls(self.bus, config)
             self.mod[module_name] = instance
-        except:
-            Logger.error(f"Unable to initialize module: {module_name}")
+        except Exception as e:
+            Logger.error(f"Unable to initialize {module_name} module: {e}")
 
     def start_modules(self):
         return [self.start_module(name) for name in self.mod]
 
     def start_module(self, name):
         module = self.mod.get(name)
-        if module and module.settings.get("enabled"):
+        if module and module.settings.get("enabled") and "start_thread" in dir(module) and callable(getattr(module,'start_thread', None)):
             try:
                 module.start_thread()
             except Exception:
@@ -66,7 +66,8 @@ class ModuleManager:
     def stop_mod(self, name=None):
         if name is None:
             for module in self.mod.values():
-                module.stop_thread()
+                if "stop_thread" in dir(module) and callable(getattr(module,'stop_thread', None)):
+                    module.stop_thread()
             return True
 
         elif name in self.mod:
@@ -86,4 +87,4 @@ class ModuleManager:
         return True
 
     def exists(self, name:str) -> bool:
-        return True if name in self.mod.keys() else False
+        return True if name in self.mod else False

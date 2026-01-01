@@ -43,7 +43,7 @@ class ThreadedResource:
             self.main_process()
             self.cycle_sleep()
     
-    def main_process(self):
+    def main_process(self, *args):
         pass
 
     def cycle_sleep(self):
