@@ -9,16 +9,16 @@
         "type": "camera",
         "name": "camera",
         "enabled": true,
-        "overrides": {
-            "cycle_time": 0.01
+        "settings": {
+            "cycle_time": 0.008
         }
     },
     {
         "type": "hand_tracker",
         "name": "hand_tracker",
         "enabled": true,
-        "overrides": {
-            "render_hands": false,
+        "settings": {
+            "render_hands": true,
             "data_smoothing": {
                 "enabled": true,
                 "defaults": [5, 0.5, 0]

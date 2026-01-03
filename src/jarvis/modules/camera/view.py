@@ -3,11 +3,11 @@ from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt
 
 from jarvis.modules.image_processing import *
-from jarvis.settings import settings
+from jarvis.core.data_services import *
 
 class CameraView(QWidget):
     def __init__(self, parent):
-        self.settings = settings.load("defaults", paths=["modules/camera"]).get("view", {})
+        self.settings = {} #load_json("modules/camera/settings", level=2).get("view")
         super().__init__(parent)
         self.parent = parent
         self.bus = parent.bus.namespaced("camera_view")
@@ -19,7 +19,7 @@ class CameraView(QWidget):
         self.feed = QLabel("No feed")
         self.feed.setAlignment(Qt.AlignCenter)
         self.feed.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        self.feed.setStyleSheet(self.feed.setStyleSheet("QLabel {border-radius: " + str(self.settings.get("window_radius", 12)) + "px; background-color: black;}"))
+        #self.feed.setStyleSheet(self.feed.setStyleSheet("QLabel {border-radius: " + str(self.settings.get("window_radius", 12)) + "px; background-color: black;}"))
 
         self.buttons = {"Start Camera": QPushButton("Start Camera"), "Stop Camera":QPushButton("Stop Camera")}
         self.buttons["Start Camera"].clicked.connect(self.start_camera)

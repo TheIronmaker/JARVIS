@@ -1,0 +1,9 @@
+{
+"cycle_time": 0.008,
+"render_hands": true,
+"data_smoothing": {
+    "enabled": true,
+    "defaults": [5, 0.5, 0]
+},
+"view": {}
+}

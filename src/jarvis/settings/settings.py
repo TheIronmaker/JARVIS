@@ -1,46 +1,21 @@
 # jarvis/settings/settings.py
-
-import json
 from pathlib import Path
 
-from jarvis.core.logger import Logger
+from jarvis.core.data_services import load_json, merge_dictionary, load_merged
 
-_dir = Path(__file__).parent
+SETTINGS_DIR = Path(__file__).parent
 
-class Settings:
-    def load(self, name:str, paths:list = None) -> dict:
-        paths = paths or []
-        name += ".json"
-        entry = _dir
-        
-        if paths is None:
-            entry = entry / name
+def load_core():
+    return load_json("core", SETTINGS_DIR, 3)
 
-        for p in paths:
-            candidate = _dir.parent / p / name
-            if candidate.exists():
-                entry = candidate
-                return self.load_json(entry)
-            
-        return self.load_json(entry)
+def load_module_settings(module_type:str) -> dict:
+    base = load_json("modules", SETTINGS_DIR)
+    load_merged(f"modules/{module_type}", base, default_level=1)
 
-    @staticmethod
-    def load_json(entry:Path) -> dict:
-        try:
-            with open(entry, "r") as f:
-                return json.load(f)
-        except FileNotFoundError:
-            Logger.warning(f"No settings file found: {entry}")
-            return {}
-        except json.JSONDecodeError as e:
-            Logger.error(f"Invalid JSON in {entry}: {e}")
-            return {}
-        except Exception as e:
-            Logger.error(f"Settings could not load {entry}")
-            return {}
-        
-    @staticmethod
-    def merge_settings(defaults: dict, overrides: dict) -> dict:
-        result = defaults.copy()
-        result.update(overrides)
-        return result
+
+    module_dir = SETTINGS_DIR / "modules" / module_type
+    defaults = load_json("default", base=module_dir)
+    modules_json = load_json("modules", base=SETTINGS_DIR)
+    overrides = modules_json.get(module_type, {})
+
+    return merge_dictionary(defaults, overrides)

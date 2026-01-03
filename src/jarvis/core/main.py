@@ -1,6 +1,4 @@
-from time import sleep
-
-from jarvis.settings import settings
+from jarvis.settings import load_core
 from jarvis.core.threaded import ThreadedResource
 from jarvis.core.databus import DataBus
 from jarvis.core.module_manager import ModuleManager
@@ -10,7 +8,7 @@ from jarvis.app_core.app import app
 class Core(ThreadedResource):
     def __init__(self, bus):
         self.bus = bus
-        self.settings = settings.load("core", ["settings"])
+        self.settings = load_core()
         super().__init__(self.settings["cycle_time"])
 
         self.modules = ModuleManager(bus)
@@ -56,7 +54,7 @@ def main():
     core.modules.start_modules()
 
     if core.settings.get("run_method") == "app":
-        app(bus)
+        app(bus, core.modules.build)
     
     # Stops main program after application closes. Can be left out to keep main thread running.
     core.stop_thread()

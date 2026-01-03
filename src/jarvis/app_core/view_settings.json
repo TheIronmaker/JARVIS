@@ -1,6 +1,6 @@
 {
-"camera_view": {
-    "enabled": true,
+"camera": {
+    "enabled": false,
     "button_max_width":250,
     "video_max_width":2160,
     "video_max_height":1440,
@@ -10,7 +10,7 @@
     "enabled": true
 },
 "face_tracker":{
-    "enabled":false
+    "enabled":true
 },
 "colors":{
     "camera_bg":"#1a1a1a"

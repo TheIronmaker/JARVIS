@@ -1,3 +1,1 @@
-from .settings import Settings
-
-settings = Settings()
+from .settings import load_core, load_module_settings

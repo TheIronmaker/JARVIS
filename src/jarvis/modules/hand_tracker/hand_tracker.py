@@ -17,9 +17,9 @@ class HandTracker:
                Depth is BGR
     """
 
-    def __init__(self, bus, settings, max_hands=2, detection_conf=0.6, tracking_conf=0.8, shape=(1080, 1920, 3), fov=12):
+    def __init__(self, bus, name, settings, max_hands=2, detection_conf=0.6, tracking_conf=0.8, shape=(1080, 1920, 3), fov=12):
         self.bus_global = bus
-        self.bus = bus.namespaced(settings.get("name"))
+        self.bus = bus.namespaced(name)
         self.settings = settings
 
         # Hand Tracking defaults and Objects
@@ -48,7 +48,6 @@ class HandTracker:
         frame = frame.copy()
 
         self.process(frame)
-
         if self.settings["render_hands"]:
             self.bus.publish("frame", self.overlay_tracking(frame))
         

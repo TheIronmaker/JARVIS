@@ -6,9 +6,9 @@ from jarvis.core.logger import Logger
 from jarvis.core.threaded import ThreadedResource
 
 class Camera(ThreadedResource):    
-    def __init__(self, bus, settings):
+    def __init__(self, bus, name, settings):
         super().__init__(settings.get("cycle_time"))
-        self.bus = bus.namespaced(settings.get("name"))
+        self.bus = bus.namespaced(name)
         self.settings = settings
 
         self.blank = 100 * np.ones((480, 640, 3), dtype=np.uint8)

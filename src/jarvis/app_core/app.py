@@ -2,16 +2,16 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, Q
 from PySide6.QtCore import Qt, QTimer
 import sys
 
+from jarvis.core.data_services import load_json
 from jarvis.core.module_manager import view
 from jarvis.modules.camera.view import CameraView
 from jarvis.modules.hand_tracker.view import HandTrackerView
-from jarvis.settings import settings
 
 class MainWindow(QMainWindow):
-    def __init__(self, bus):
+    def __init__(self, bus, build):
         super().__init__()
         self.bus = bus
-        self.settings = {}
+        self.settings = build
         self.setWindowTitle("JARVIS")
         self.setDockOptions(QMainWindow.AllowTabbedDocks)
         self.modules = {}
@@ -74,14 +74,14 @@ class MainWindow(QMainWindow):
         self.camera_view.update(self.bus.get("hand_tracker.frame"))
         self.hand_tracker_view.update()
 
-def app(state):
+def app(*args):
     app = QApplication(sys.argv)
-    window = MainWindow(state)
+    window = MainWindow(*args)
     window.resize(1200, 800)
     window.show()
 
     timer = QTimer()
-    timer.setInterval(33)
+    timer.setInterval(10)
     timer.timeout.connect(window.update_views)
     timer.start()
 
