@@ -1,5 +1,4 @@
 # Installation Process
-# Mac
 # Step 1 - Navigation
 Navigate to the directory that you want to install the `JARVIS` package into inside terminal, or your favorite code editor. Any terminal window should suffice.
 ## Mac
