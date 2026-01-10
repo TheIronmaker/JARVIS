@@ -1,6 +1,8 @@
 {
+"name":"camera",
 "cycle_time": 0.008,
 "view": {
+    "frame_link":"camera",
     "window_radius":12
 }
 }

@@ -6,10 +6,11 @@ from jarvis.modules.image_processing import *
 from jarvis.core.data_services import *
 
 class CameraView(QWidget):
-    def __init__(self, parent):
-        self.settings = {} #load_json("modules/camera/settings", level=2).get("view")
+    def __init__(self, parent, settings):
         super().__init__(parent)
         self.parent = parent
+        self.settings = settings
+        self.bus_global = parent.bus
         self.bus = parent.bus.namespaced("camera_view")
 
         layout = QVBoxLayout()
@@ -36,8 +37,18 @@ class CameraView(QWidget):
         layout.addLayout(btn_layout)
         self.setLayout(layout)
 
-    def update(self, frame):
-        if frame is None: return False
+    def link_camera(self, link:str):
+        if link and isinstance(link, str):
+            self.settings["frame_link"] = link
+    
+    def unlink_camera(self):
+        self.settings["frame_link"] = None
+
+    def update(self, frame=None):
+        if frame is None:
+            link = self.settings.get("frame_link")
+            if not link: return False
+            frame = self.bus_global.get(self.settings.get("frame_link") + ".frame")
         
         # Ensures frame is unbroken before updating - Threading issue
         frame = np.ascontiguousarray(frame)
@@ -50,8 +61,6 @@ class CameraView(QWidget):
     
     def start_camera(self):
         self.parent.bus.publish("camera.create", True)
-        print("Camera Starting")
     
     def stop_camera(self):
         self.parent.bus.publish("camera.destruct", True)
-        print("Stopping Camera")

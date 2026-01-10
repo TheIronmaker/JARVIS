@@ -1,6 +1,7 @@
 {
 "camera": {
     "enabled": false,
+    "frame_link":"camera",
     "button_max_width":250,
     "video_max_width":2160,
     "video_max_height":1440,

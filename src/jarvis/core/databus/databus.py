@@ -30,6 +30,15 @@ class DataBus:
     def subscribe(self, topic, callback):
         with self._lock:
             self._subs[topic].append(callback)
+    
+    def unsubscribe(self, topic, error=True):
+        with self._lock:
+            try:
+                del self._subs[topic]
+            except:
+                if error:
+                    Logger.warning(f"Unsubscribe topic did not exist: {topic}")
+                    return False
 
     def exists(self, topic, default):
         return True if topic in self._data.keys() else default
@@ -37,6 +46,8 @@ class DataBus:
     def namespaced(self, prefix):
         bus = self
         class NSBus:
+            def __init__(self):
+                self.name = prefix
             def publish(self, topic, value):
                 bus.publish(f"{prefix}.{topic}", value)
             def publish_many(self, data):

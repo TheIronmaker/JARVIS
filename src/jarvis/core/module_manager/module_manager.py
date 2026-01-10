@@ -1,8 +1,7 @@
 from pathlib import Path
 
-from jarvis.settings import load_module_settings
 from jarvis.core.logger import Logger
-from jarvis.core.data_services import load_merged, load_json, merge_dictionary
+from jarvis.core.data_services import load_json, merge_dictionary
 from jarvis.modules import *
 
 MODULE_MANAGER_DIR = Path(__file__).parent
@@ -25,9 +24,9 @@ class ModuleManager:
         for module in self.build.get("instances", []):
             self.load_module(module)
         return True
-
+    
     def create(self, type:str, name:str=None):
-        name = type if name is None else name
+        name = name or type
         module_config = self.defaults.get(type)
         if not module_config:
             module_config = load_json(f"modules/{type}/settings", MODULES_DIR) or {}
@@ -51,7 +50,7 @@ class ModuleManager:
             Logger.error("Module Type not provided. Module failed to build")
             return False
 
-        name = module.get("name") or module.get("type") or name
+        name = module.get("name") or module.get("type")
         if name is None:
             Logger.error(f"Module failed to build, insufficient name provided: {name}")
             return False
@@ -72,6 +71,7 @@ class ModuleManager:
         settings = merge_dictionary(self.defaults.get(name), module.get("settings", {}))
         if settings:
             package.append(settings)
+        module["settings"] = settings
 
         self.init_module(name, cls, package)
 
@@ -109,9 +109,16 @@ class ModuleManager:
         return False
     
     def destruct(self, name=None):
-        self.stop_mod(name)
-        del self.modules[name]
-        return False if self.exists(name) else True
+        try:
+            self.stop_mod(name)
+            if name:
+                del self.modules[name]
+            if not self.exists(name):
+                return True
+        except Exception as e:
+            message = " " + name if name else "s"
+            Logger.error(f"Unable to properly destroy module{message}: {e}")
+        return False
 
     def restart(self, name):
         self.destruct(name)
@@ -120,3 +127,6 @@ class ModuleManager:
 
     def exists(self, name:str) -> bool:
         return True if name in self.modules else False
+    
+    def access(self, name:str):
+        return self.modules.get(name, False)

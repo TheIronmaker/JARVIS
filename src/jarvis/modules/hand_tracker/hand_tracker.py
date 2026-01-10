@@ -7,17 +7,7 @@ from jarvis.modules.image_processing import *
 from jarvis.modules.smooth_damp import SmoothDampArray
 
 class HandTracker:
-    """Handles hand tracking with sub-class Math for calculations.
-    
-    Args:
-        name: 
-        max_hands: Max number of tracked hands
-        detection_conf: Confidence in tracking
-        shape: Acceptable formats: (width, height) or (width, height, depth)
-               Depth is BGR
-    """
-
-    def __init__(self, bus, name, settings, max_hands=2, detection_conf=0.6, tracking_conf=0.8, shape=(1080, 1920, 3), fov=12):
+    def __init__(self, bus, name, settings):
         self.bus_global = bus
         self.bus = bus.namespaced(name)
         self.settings = settings
@@ -27,21 +17,25 @@ class HandTracker:
             self.mp_draw = mp.solutions.drawing_utils
             self.mp_hands = mp.solutions.hands
             self.hands = self.mp_hands.Hands(
-                max_num_hands=max_hands,
-                min_detection_confidence=detection_conf,
-                min_tracking_confidence=tracking_conf)
+                max_num_hands=settings.get("max_hands", 2),
+                min_detection_confidence=settings.get("detection_confidence", 0.6),
+                min_tracking_confidence=settings.get("tracking_confidence", 0.8))
         except Exception as e:
             Logger.info(f"Could not initialize hand tracking modules: {e}")
         
         # Variables
-        self.shape = shape if len(shape) == 3 else (*shape, 3)
-        self.fov = fov
         self.results = None
         self.array = np.zeros((21, 3))
         self.math = Math(self)
 
-        # Subscribe Functions
-        self.bus_global.subscribe("camera.frame", self.main_process)
+        self.link_camera(self.settings.get("linked_camera"))
+
+    def link_camera(self, link:str):
+        if link and isinstance(link, str):
+            self.settings["linked_camera"] = link
+            link += ".frame"
+            self.bus_global.unsubscribe(link, error=False)
+            self.bus_global.subscribe(link, self.main_process)
     
     def main_process(self, frame):
         if frame is None: return False
@@ -49,7 +43,8 @@ class HandTracker:
 
         self.process(frame)
         if self.settings["render_hands"]:
-            self.bus.publish("frame", self.overlay_tracking(frame))
+            image = self.overlay_tracking(np.zeros((1080, 1920, 3), dtype=np.uint8))
+            self.bus.publish("frame", image)
         
         self.math.data["global"] = self.get_coordinates()
 
@@ -87,7 +82,6 @@ class HandTracker:
 class Math:
     def __init__(self, parent):
         self.parent = parent
-        self.fov = parent.fov # or use parent.fov every time for the Math class and don't define as "self"
         self.shape = (21, 3)
 
         self.config = data_handler.load_json(path="jarvis.modules.hand_tracker", name="coordinate_base.json")

@@ -1,16 +1,14 @@
 {
-"module_manager": {
-    "type": "module_manager",
-    "name": "module_manager",
-    "enabled": true
-},
 "instances":[
     {
         "type": "camera",
         "name": "camera",
         "enabled": true,
         "settings": {
-            "cycle_time": 0.008
+            "cycle_time": 0.008,
+            "view":{
+                "frame_link":"hand_tracker"
+            }
         }
     },
     {

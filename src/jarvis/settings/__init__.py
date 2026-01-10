@@ -1,1 +1,0 @@
-from .settings import load_core, load_module_settings

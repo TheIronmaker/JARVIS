@@ -2,42 +2,91 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, Q
 from PySide6.QtCore import Qt, QTimer
 import sys
 
-from jarvis.core.data_services import load_json
-from jarvis.core.module_manager import view
+from jarvis.core.logger import Logger
 from jarvis.modules.camera.view import CameraView
 from jarvis.modules.hand_tracker.view import HandTrackerView
+
+class ViewManager:
+    def __init__(self, parent, bus, build):
+        self.parent = parent
+        self.bus = bus
+        self.build = build
+        self.defaults = {}
+        self.views = {}
+        self.classes = {
+            "camera": CameraView,
+            "hand_tracker":HandTrackerView
+            }
+
+    def load_views(self):
+        for module in self.build.get("instances", []):
+            self.load_view(module.get("settings", {}))
+        
+    def load_view(self, module):
+        try:
+            if module.get("view"):
+                view_settings = module["view"]
+
+                name = module.get("name")
+                if not name:
+                    Logger.error(f"Could not start view: Missing view name")
+                    return None
+
+                package = [self.parent]
+                if view_settings:
+                    package.append(view_settings)
+
+                instance = self.classes[name](*package)
+                self.views[name] = instance
+
+        except Exception as e:
+            Logger.error(f"Could not load view: {e}")
+    
+    def update(self):
+        for view in self.views.values():
+            try:
+                view.update()
+            except Exception as e:
+                Logger.warning(f"Unable to update view: {e}")
 
 class MainWindow(QMainWindow):
     def __init__(self, bus, build):
         super().__init__()
         self.bus = bus
-        self.settings = build
-        self.setWindowTitle("JARVIS")
-        self.setDockOptions(QMainWindow.AllowTabbedDocks)
+        self.build = build
         self.modules = {}
-
-        self.camera_view = CameraView(self)
-        self.camera_box = self.create_view(self.camera_view, min_size=(125, 125))
+        self.view_manager = ViewManager(self, bus, build)
+        self.view_manager.load_views()
+        
+        #self.camera_view = CameraView(self, {})
+        #self.camera_box = self.create_view(self.camera_view, min_size=(125, 125))
 
         self._build_central()
 
-        if self.settings.get("private_tests"):
+        if self.build.get("private_tests"):
             from jarvis.private_tests.finance.view import FinanceWindow
             self.add_dock("finance", FinanceWindow(), dock_area="right")
         
-        self.hand_tracker_view = HandTrackerView(self)
-        self.add_dock("hand tracker", self.hand_tracker_view, dock_area="left", initial_size=500)
+        #self.hand_tracker_view = HandTrackerView(self)
+        #self.add_dock("hand tracker", self.hand_tracker_view, dock_area="left", initial_size=500)
 
     def _build_central(self):
+        self.setWindowTitle("JARVIS")
+        self.setDockOptions(QMainWindow.AllowTabbedDocks)
         central = QWidget()
         layout = QVBoxLayout()
 
+        # Main area
+
         self.workspace = QLabel("Main workspace")
         self.workspace.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
         layout.addWidget(self.workspace)
-        layout.addWidget(self.camera_box)
 
+        for view in self.view_manager.views.values():
+            view_box = self.create_view(view)
+            layout.addWidget(view_box)
+
+        # Finishing
         central.setLayout(layout)
         self.setCentralWidget(central)
 
@@ -71,7 +120,7 @@ class MainWindow(QMainWindow):
         return view_box
 
     def update_views(self):
-        self.camera_view.update(self.bus.get("hand_tracker.frame"))
+        #self.camera_view.update(self.bus.get("hand_tracker.frame"))
         self.hand_tracker_view.update()
 
 def app(*args):
@@ -82,7 +131,7 @@ def app(*args):
 
     timer = QTimer()
     timer.setInterval(10)
-    timer.timeout.connect(window.update_views)
+    timer.timeout.connect(window.view_manager.update)
     timer.start()
 
     app.exec()
