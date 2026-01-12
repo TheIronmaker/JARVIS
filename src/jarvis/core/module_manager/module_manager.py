@@ -78,9 +78,16 @@ class ModuleManager:
     def init_module(self, name, cls, package):
         try:
             instance = cls(*package)
+            if instance is False:
+                Logger.error(f"Module initialization failed: {name}")
+                return False
             self.modules[name] = instance
+        
         except Exception as e:
-            Logger.error(f"Unable to initialize {name} module: {e}")
+            Logger.error(f"Failed to initialize module {name}: {e}")
+            self.modules.pop(name, None)
+            return False
+        return True
 
     def start_modules(self):
         return [self.start_module(name) for name in self.modules]

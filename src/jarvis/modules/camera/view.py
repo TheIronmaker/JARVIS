@@ -43,12 +43,21 @@ class CameraView(QWidget):
     
     def unlink_camera(self):
         self.settings["frame_link"] = None
-
-    def update(self, frame=None):
-        if frame is None:
-            link = self.settings.get("frame_link")
-            if not link: return False
-            frame = self.bus_global.get(self.settings.get("frame_link") + ".frame")
+    
+    def start_camera(self):
+        self.parent.bus.publish("camera.create", True)
+    
+    def stop_camera(self):
+        self.parent.bus.publish("camera.destruct", True)
+    
+    def update(self):
+        link = self.settings.get("frame_link")
+        if not link:
+            return False
+        
+        frame = self.bus_global.get(link + ".frame")
+        if frame is None or not hasattr(frame, "shape") or len(frame.shape) < 2:
+            return False
         
         # Ensures frame is unbroken before updating - Threading issue
         frame = np.ascontiguousarray(frame)
@@ -58,9 +67,3 @@ class CameraView(QWidget):
 
         self.feed.setPixmap(round_pixmap(pixmap, 12))
         return True
-    
-    def start_camera(self):
-        self.parent.bus.publish("camera.create", True)
-    
-    def stop_camera(self):
-        self.parent.bus.publish("camera.destruct", True)

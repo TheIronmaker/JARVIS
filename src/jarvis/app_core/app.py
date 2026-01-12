@@ -43,11 +43,11 @@ class ViewManager:
             Logger.error(f"Could not load view: {e}")
     
     def update(self):
-        for view in self.views.values():
+        for name, view in self.views.items():
             try:
                 view.update()
             except Exception as e:
-                Logger.warning(f"Unable to update view: {e}")
+                Logger.warning(f"Unable to update {name} view: {e}")
 
 class MainWindow(QMainWindow):
     def __init__(self, bus, build):

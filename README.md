@@ -28,6 +28,10 @@ Alternate version in case the first doesn't work:
 ```
 python3.12 -m venv venv
 ```
+Or maybe:
+```
+python3.12 -m venv venv
+```
 
 ## Initialize venv
 While inside of the folder containing the venv, initialize it with a command:
