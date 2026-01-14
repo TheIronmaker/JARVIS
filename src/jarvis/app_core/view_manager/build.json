@@ -1,0 +1,13 @@
+{
+"instances":[
+    {
+        "type": "camera",
+        "name": "camera",
+        "enabled": true,
+        "settings": {
+            "frame_links": ["camera"]
+        }
+    }
+]
+
+}

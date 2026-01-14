@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt
 from jarvis.app_core.gui_elements import DisplaySlider
 
 class HandTrackerView(QWidget):
-    def __init__(self, parent, name="hand_tracker"):
+    def __init__(self, name, parent, settings):
         super().__init__(parent)
         self.parent = parent
         self.bus = parent.bus

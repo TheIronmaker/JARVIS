@@ -3,15 +3,15 @@ from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt
 
 from jarvis.modules.image_processing import *
-from jarvis.core.data_services import *
 
 class CameraView(QWidget):
-    def __init__(self, parent, settings):
+    def __init__(self, name, parent, settings):
         super().__init__(parent)
         self.parent = parent
-        self.settings = settings
         self.bus_global = parent.bus
-        self.bus = parent.bus.namespaced("camera_view")
+        self.name = name
+        self.settings = settings
+        self.bus = parent.bus.namespaced(name)
 
         layout = QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)

@@ -1,13 +1,16 @@
 import mediapipe as mp
 import numpy as np
+from pathlib import Path
 
 from jarvis.core.logger import Logger
-from jarvis.modules import data_handler
 from jarvis.modules.image_processing import *
 from jarvis.modules.smooth_damp import SmoothDampArray
+from jarvis.utils.data_services import load_json
+
+DIR = Path(__file__).parent
 
 class HandTracker:
-    def __init__(self, bus, name, settings):
+    def __init__(self, name, bus, settings):
         self.bus_global = bus
         self.bus = bus.namespaced(name)
         self.settings = settings
@@ -41,19 +44,20 @@ class HandTracker:
         if frame is None: return False
         frame = frame.copy()
 
+        # Process and publish frame
         self.process(frame)
         if self.settings["render_hands"]:
-            image = self.overlay_tracking(np.zeros((1080, 1920, 3), dtype=np.uint8))
-            self.bus.publish("frame", image)
+            frame = self.overlay_tracking(np.zeros((1080, 1920, 3), dtype=np.uint8))
+        self.bus.publish("frame", frame)
         
+        # Handle Math
         self.math.data["global"] = self.get_coordinates()
-
         if self.settings["data_smoothing"]["enabled"]:
             self.math.SD.next(self.math.data["global"], update=True)
         
         self.math.calc_local()
         self.math.calc_cartesian()
-        self.bus.publish("coordinates_overlay", self.math.readout("local"))
+        self.math.readout("local", "coordinates_overlay")
         self.bus.publish_many(self.math.data)
 
     def process(self, img):
@@ -84,7 +88,7 @@ class Math:
         self.parent = parent
         self.shape = (21, 3)
 
-        self.config = data_handler.load_json(path="jarvis.modules.hand_tracker", name="coordinate_base.json")
+        self.config = load_json("coordinate_base", DIR)
 
         self.data = {
             "global":np.zeros(self.shape),
@@ -132,8 +136,8 @@ class Math:
         cos_angle = np.dot(ba, bc) / (np.linalg.norm(ba) * np.linalg.norm(bc))
         return np.degrees(np.arccos(np.clip(cos_angle, -1.0, 1.0)))
 
-    def readout(self, version:str=""):
-        if version == "": return False
+    def readout(self, version:str=None, label:str=None):
+        if not version: return False
 
         readout = []
         for p, (x, y, z) in enumerate(self.data[version]):
@@ -141,4 +145,7 @@ class Math:
             pads = [" " * abs(4 - len(str(c))) for c in coords]
             readout.append(f"X: {coords[0]},{pads[0]} Y: {coords[1]},{pads[1]} Z: {coords[2]},{pads[2]} | Point ID: {p}")
         
-        return draw_text_list(readout, (1000, 1000), (20, 20))
+        frame = draw_text_list(readout, (1000, 1000), (20, 20))
+        if label and isinstance(label, str):
+            self.data[label] = frame
+        return frame

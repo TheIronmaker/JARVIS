@@ -5,7 +5,7 @@ from jarvis.core.threaded import ThreadedResource
 
 
 class FaceTracker():    
-    def __init__(self, bus, name, settings, max_faces=1, detection_conf=0.6, tracking_conf=0.6):
+    def __init__(self, name, bus, settings, max_faces=1, detection_conf=0.6, tracking_conf=0.6):
         self.bus_global = bus
         self.bus = bus.namespaced(name)
         self.settings = settings

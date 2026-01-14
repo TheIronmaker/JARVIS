@@ -2,64 +2,16 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, Q
 from PySide6.QtCore import Qt, QTimer
 import sys
 
-from jarvis.core.logger import Logger
-from jarvis.modules.camera.view import CameraView
-from jarvis.modules.hand_tracker.view import HandTrackerView
-
-class ViewManager:
-    def __init__(self, parent, bus, build):
-        self.parent = parent
-        self.bus = bus
-        self.build = build
-        self.defaults = {}
-        self.views = {}
-        self.classes = {
-            "camera": CameraView,
-            "hand_tracker":HandTrackerView
-            }
-
-    def load_views(self):
-        for module in self.build.get("instances", []):
-            self.load_view(module.get("settings", {}))
-        
-    def load_view(self, module):
-        try:
-            if module.get("view"):
-                view_settings = module["view"]
-
-                name = module.get("name")
-                if not name:
-                    Logger.error(f"Could not start view: Missing view name")
-                    return None
-
-                package = [self.parent]
-                if view_settings:
-                    package.append(view_settings)
-
-                instance = self.classes[name](*package)
-                self.views[name] = instance
-
-        except Exception as e:
-            Logger.error(f"Could not load view: {e}")
-    
-    def update(self):
-        for name, view in self.views.items():
-            try:
-                view.update()
-            except Exception as e:
-                Logger.warning(f"Unable to update {name} view: {e}")
+from jarvis.app_core.view_manager import ViewManager
 
 class MainWindow(QMainWindow):
     def __init__(self, bus, build):
         super().__init__()
         self.bus = bus
         self.build = build
-        self.modules = {}
-        self.view_manager = ViewManager(self, bus, build)
-        self.view_manager.load_views()
-        
-        #self.camera_view = CameraView(self, {})
-        #self.camera_box = self.create_view(self.camera_view, min_size=(125, 125))
+        self.docks = {}
+
+        self.view_manager = ViewManager(self, bus)
 
         self._build_central()
 
@@ -82,7 +34,7 @@ class MainWindow(QMainWindow):
         self.workspace.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         layout.addWidget(self.workspace)
 
-        for view in self.view_manager.views.values():
+        for view in self.view_manager.nodes.values():
             view_box = self.create_view(view)
             layout.addWidget(view_box)
 
@@ -105,7 +57,7 @@ class MainWindow(QMainWindow):
 
         orientation = Qt.Horizontal if dock_area in ("left", "right") else Qt.Vertical
         self.resizeDocks([dock], [initial_size], orientation)
-        self.modules[name] = dock
+        self.docks[name] = dock
     
     def create_view(self, view, min_size=(125, 125), max_size=(1000, 1000)):
         view_box = QGroupBox()

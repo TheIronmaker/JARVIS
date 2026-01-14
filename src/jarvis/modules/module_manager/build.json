@@ -5,10 +5,7 @@
         "name": "camera",
         "enabled": true,
         "settings": {
-            "cycle_time": 0.008,
-            "view":{
-                "frame_link":"hand_tracker"
-            }
+            "cycle_time": 0.008
         }
     },
     {
@@ -17,6 +14,7 @@
         "enabled": true,
         "settings": {
             "render_hands": true,
+            "max_hands":1,
             "data_smoothing": {
                 "enabled": true,
                 "defaults": [5, 0.5, 0]
