@@ -35,14 +35,12 @@ class Manager:
             return f"Struct already exists in main struct: {struct_name}"
 
         # Create class arguments
-        settings = merge_dictionary(self.defaults.get(struct_type), struct.get("settings"))
-        
         if start_struct:
-            self.start_node(struct_type, struct_name, package, settings)
+            self.start_node(struct_type, struct_name, package, struct.get("settings", {}))
         
     def start_node(self, struct_type, struct_name, package, settings:dict={}):
-        if settings:
-            package.append(settings)
+        if settings is not False:
+            package.append(merge_dictionary(self.defaults.get(struct_type), settings))
 
         try:
             instance = self.classes[struct_type](struct_name, *package)

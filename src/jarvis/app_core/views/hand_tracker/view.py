@@ -7,9 +7,12 @@ from jarvis.app_core.gui_elements import DisplaySlider
 class HandTrackerView(QWidget):
     def __init__(self, name, parent, settings):
         super().__init__(parent)
-        self.parent = parent
-        self.bus = parent.bus
         self.name = name
+        self.parent = parent
+        self.settings = settings
+
+        self.bus_global = parent.bus
+        self.bus = parent.bus.namespaced(name)
 
         self.mapping: dict[QLabel, QPixmap | None] = {}
 
@@ -44,6 +47,7 @@ class HandTrackerView(QWidget):
         return QPixmap.fromImage(img)
     
     def update(self):
+        link = self.settings.get("frame_link")
         self.update_frame(self.readout, self.bus.get("coordinates_overlay"))
         #self.update_frame(self.rotation_coor, self.bus.get("palm_gizmo"))
         #self.slider.set_value(self.bus.get("slider_value", 0))

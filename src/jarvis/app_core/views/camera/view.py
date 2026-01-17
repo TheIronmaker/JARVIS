@@ -7,10 +7,11 @@ from jarvis.modules.image_processing import *
 class CameraView(QWidget):
     def __init__(self, name, parent, settings):
         super().__init__(parent)
-        self.parent = parent
-        self.bus_global = parent.bus
         self.name = name
+        self.parent = parent
         self.settings = settings
+        
+        self.bus_global = parent.bus
         self.bus = parent.bus.namespaced(name)
 
         layout = QVBoxLayout()
@@ -37,11 +38,11 @@ class CameraView(QWidget):
         layout.addLayout(btn_layout)
         self.setLayout(layout)
 
-    def link_camera(self, link:str):
+    def set_link(self, link:str):
         if link and isinstance(link, str):
             self.settings["frame_link"] = link
     
-    def unlink_camera(self):
+    def unlink(self):
         self.settings["frame_link"] = None
     
     def start_camera(self):

@@ -5,8 +5,6 @@ from jarvis.core.logger import Logger
 from jarvis.app_core.views.camera.view import CameraView
 from jarvis.app_core.views.hand_tracker.view import HandTrackerView
 
-from jarvis.utils.data_services import load_json
-
 VIEW_MANAGER_DIR = Path(__file__).parent
 VIEWS_DIR = Path(__file__).parent.parent / "views"
 

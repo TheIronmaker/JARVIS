@@ -7,6 +7,14 @@
         "settings": {
             "frame_links": ["camera"]
         }
+    },
+    {
+        "type": "hand_tracker",
+        "name": "hand_tracker",
+        "enabled": true,
+        "settings": {
+            "frame_links": ["hand_tracker"]
+        }
     }
 ]
 
