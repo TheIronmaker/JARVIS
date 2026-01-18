@@ -20,7 +20,6 @@ class Camera(ThreadedResource):
         while self.running:
             self.capture_image()
             self.bus.publish("frame", self.img)
-            
             self.cycle_sleep()
     
     def close(self):

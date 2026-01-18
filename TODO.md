@@ -1,4 +1,6 @@
 # Application
+## app_core
+Layout orchestrator + layout build.json for placement of views and other types. it handles the placement of everything into the application, but not the creation of those views etc. itself. It's the glue.a
 
 ## Hand Tracking 🔲 ✅
 General Purpose

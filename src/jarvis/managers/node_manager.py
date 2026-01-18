@@ -17,8 +17,8 @@ class Manager:
             if isinstance(msg, str):
                 Logger.error(f"Struct failed to build. {msg}")
     
-    def construct(self, struct: dict, package:list=[], start_struct:bool=True):
-        package = package.copy()
+    def construct(self, struct: dict, package: any=[], start_struct:bool=True) -> any:
+        package = list(package).copy()
         if not struct.get("enabled", True):
             return None
 
@@ -36,16 +36,15 @@ class Manager:
 
         # Create class arguments
         if start_struct:
-            self.start_node(struct_type, struct_name, package, struct.get("settings", {}))
+            return self.start_node(struct_type, struct_name, package, struct.get("settings", {}))
         
-    def start_node(self, struct_type, struct_name, package, settings:dict={}):
+    def start_node(self, struct_type, struct_name, package, settings:dict=None):
         if settings is not False:
             package.append(merge_dictionary(self.defaults.get(struct_type), settings))
 
         try:
             instance = self.classes[struct_type](struct_name, *package)
             self.nodes[struct_name] = instance
+            return instance
         except Exception as e:
-            Logger.error(f"Initialization failed for {struct_name}: {e}")
-            return False
-        return True
+            return f"Initialization failed: {e}"

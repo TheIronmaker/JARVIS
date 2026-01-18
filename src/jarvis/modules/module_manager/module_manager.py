@@ -23,22 +23,6 @@ class ModuleManager(Manager):
         super().__init__()
         self.initialize(self.classes, main_dir=(MODULE_MANAGER_DIR, "build"), default_dir=(MODULES_DIR, "settings"))
         self.load_structs(package=[bus])
-    
-    # Move to Manager Class
-    def create(self, type:str, name:str=None):
-        name = name or type
-        module_config = self.defaults.get(type)
-        if not module_config:
-            module_config = load_json(f"modules/{type}/settings", MODULES_DIR) or {}
-
-            if not module_config:
-                Logger.warning(f"Module settings inaccessible: {type}")
-                module_config = {}
-            
-            self.defaults[type] = module_config
-            self.build[name] = module_config
-        
-        self.load_module({"type":type, "name":name, "enabled":True, "settings":module_config}) # Could remove enabled setting
 
     def start_modules(self):
         return [self.start_module(name) for name in self.nodes]
@@ -66,6 +50,7 @@ class ModuleManager(Manager):
         
         return False
     
+    # Move to node manager
     def destruct(self, name=None):
         try:
             self.stop_mod(name)

@@ -1,8 +1,9 @@
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QPushButton, QSizePolicy, QHBoxLayout
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt
 
 from jarvis.modules.image_processing import *
+from jarvis.app_core.gui_elements import ButtonStack
 
 class CameraView(QWidget):
     def __init__(self, name, parent, settings):
@@ -14,36 +15,23 @@ class CameraView(QWidget):
         self.bus_global = parent.bus
         self.bus = parent.bus.namespaced(name)
 
-        layout = QVBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(4)
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.feed = QLabel("No feed")
-        self.feed.setAlignment(Qt.AlignCenter)
-        self.feed.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        #self.feed.setStyleSheet(self.feed.setStyleSheet("QLabel {border-radius: " + str(self.settings.get("window_radius", 12)) + "px; background-color: black;}"))
+        
+        self.buttons = ButtonStack({"Start_Camera":self.start_camera, "Stop Camera":self.stop_camera})
 
-        self.buttons = {"Start Camera": QPushButton("Start Camera"), "Stop Camera":QPushButton("Stop Camera")}
-        self.buttons["Start Camera"].clicked.connect(self.start_camera)
-        self.buttons["Stop Camera"].clicked.connect(self.stop_camera)
+        self.layout.addWidget(self.feed)
+        self.layout.addLayout(self.buttons.layout)
+        self.setLayout(self.layout)
 
-        btn_layout = QHBoxLayout()
-        btn_layout.setContentsMargins(0, 0, 0, 0)
-        btn_layout.setSpacing(2)
-
-        for _, button in self.buttons.items():
-            btn_layout.addWidget(button, alignment=Qt.AlignHCenter)
-
-        layout.addWidget(self.feed)
-        layout.addLayout(btn_layout)
-        self.setLayout(layout)
-
-    def set_link(self, link:str):
+    def add_link(self, link:str, placement=0):
         if link and isinstance(link, str):
-            self.settings["frame_link"] = link
+            self.settings["frame_links"].insert(placement, link)
     
-    def unlink(self):
-        self.settings["frame_link"] = None
+    def clear_links(self):
+        self.settings["frame_links"] = []
     
     def start_camera(self):
         self.parent.bus.publish("camera.create", True)
@@ -52,7 +40,8 @@ class CameraView(QWidget):
         self.parent.bus.publish("camera.destruct", True)
     
     def update(self):
-        link = self.settings.get("frame_link")
+        links = self.settings.get("frame_links")
+        link = links[0] if links else None
         if not link:
             return False
         
@@ -65,6 +54,5 @@ class CameraView(QWidget):
         height, width = frame.shape[:2]
         qt_image = QImage(frame.tobytes(), width, height, 3 * width, QImage.Format_RGB888)
         pixmap = QPixmap.fromImage(qt_image.copy()).scaledToWidth(self.feed.width(), Qt.FastTransformation)
-
-        self.feed.setPixmap(round_pixmap(pixmap, 12))
-        return True
+        self.feed.setPixmap(round_pixmap(pixmap, self.settings.get("corner_radius")))
+        return True 

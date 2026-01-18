@@ -13,12 +13,7 @@
         "name": "hand_tracker",
         "enabled": true,
         "settings": {
-            "render_hands": true,
-            "max_hands":1,
-            "data_smoothing": {
-                "enabled": true,
-                "defaults": [5, 0.5, 0]
-            }
+            "max_hands":1
         }
     }
 ]

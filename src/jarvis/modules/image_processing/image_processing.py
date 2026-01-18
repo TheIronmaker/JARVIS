@@ -8,7 +8,7 @@ from PySide6.QtCore import Qt
 
 
 def round_pixmap(pixmap, radius):
-    if radius == 0: return pixmap
+    if not radius: return pixmap
     
     rounded = QPixmap(pixmap.size())
     rounded.fill(Qt.transparent)

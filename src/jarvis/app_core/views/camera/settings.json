@@ -1,4 +1,5 @@
 {
     "frame_link": "camera",
-    "window_radius": 12
+    "corner_radius": 12,
+    "view_box":true
 }

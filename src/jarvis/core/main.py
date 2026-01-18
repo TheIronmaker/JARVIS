@@ -20,10 +20,10 @@ class Core(ThreadedResource):
         while self.running:
 
             if self.bus.get("camera.create"):
-                self.module_manager.create("camera")
-                self.module_manager.start_module("camera")
+                camera = self.module_manager.construct({"type":"camera", "name":"camera"}, [self.bus])
+                if not isinstance(camera, str):
+                    camera.start_thread()
                 self.bus.publish("camera.create", False)
-                
 
             if self.bus.get("camera.destruct", False) and self.module_manager.exists("camera"):
                 self.module_manager.destruct("camera")

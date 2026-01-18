@@ -1,3 +1,5 @@
+from PySide6.QtWidgets import QHBoxLayout, QGroupBox, QSizePolicy
+from PySide6.QtCore import Qt
 from pathlib import Path
 
 from jarvis.managers import Manager
@@ -21,6 +23,31 @@ class ViewManager(Manager):
         super().__init__()
         self.initialize(self.classes, main_dir=(VIEW_MANAGER_DIR, "build"), default_dir=(VIEWS_DIR, "settings"))
         self.load_structs(package=[parent])
+
+    def create_view_box(self, view, min_size=(125, 125), max_size=(1000, 1000)):
+        view_box = QGroupBox()
+        #view_box.setMinimumSize(*min_size)
+
+        view_box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+        layout = QHBoxLayout()
+        layout.addWidget(view, 1)
+        layout.setContentsMargins(2, 2, 2, 2)
+        view_box.setLayout(layout)
+        return view_box
+
+    def stack(self, layout=None):
+        if layout is None:
+            layout = QHBoxLayout()
+
+        for view in self.nodes.values():
+            view.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+
+            if hasattr(view, "settings") and view.settings.get("view_box"):
+                view = self.create_view_box(view)
+
+            layout.addWidget(view, 1)
+        return layout
 
     def update(self):
         for name, view in self.nodes.items():
