@@ -24,14 +24,10 @@ class ViewManager(Manager):
         self.initialize(self.classes, main_dir=(VIEW_MANAGER_DIR, "build"), default_dir=(VIEWS_DIR, "settings"))
         self.load_structs(package=[parent])
 
-    def create_view_box(self, view, min_size=(125, 125), max_size=(1000, 1000)):
+    def create_view_box(self, view):
         view_box = QGroupBox()
-        #view_box.setMinimumSize(*min_size)
-
-        view_box.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
         layout = QHBoxLayout()
-        layout.addWidget(view, 1)
+        layout.addWidget(view)
         layout.setContentsMargins(2, 2, 2, 2)
         view_box.setLayout(layout)
         return view_box
@@ -46,7 +42,7 @@ class ViewManager(Manager):
             if hasattr(view, "settings") and view.settings.get("view_box"):
                 view = self.create_view_box(view)
 
-            layout.addWidget(view, 1)
+            layout.addWidget(view)
         return layout
 
     def update(self):

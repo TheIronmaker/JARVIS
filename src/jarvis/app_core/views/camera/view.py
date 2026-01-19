@@ -19,6 +19,9 @@ class CameraView(QWidget):
         self.layout.setContentsMargins(0, 0, 0, 0)
 
         self.feed = QLabel("No feed")
+        self.feed.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Ignored)
+        self.feed.setAlignment(Qt.AlignCenter)
+        # self.feed.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
         self.buttons = ButtonStack({"Start_Camera":self.start_camera, "Stop Camera":self.stop_camera})
 
@@ -53,6 +56,6 @@ class CameraView(QWidget):
         frame = np.ascontiguousarray(frame)
         height, width = frame.shape[:2]
         qt_image = QImage(frame.tobytes(), width, height, 3 * width, QImage.Format_RGB888)
-        pixmap = QPixmap.fromImage(qt_image.copy()).scaledToWidth(self.feed.width(), Qt.FastTransformation)
+        pixmap = QPixmap.fromImage(qt_image.copy()).scaled(self.feed.size(), Qt.KeepAspectRatio, Qt.FastTransformation)
         self.feed.setPixmap(round_pixmap(pixmap, self.settings.get("corner_radius")))
-        return True 
+        return True
