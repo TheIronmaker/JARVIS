@@ -15,6 +15,7 @@ class Core(ThreadedResource):
         super().__init__(self.settings["cycle_time"])
 
         self.module_manager = ModuleManager(bus)
+        self.module_manager.start_modules()
 
     def loop(self):
         while self.running:
@@ -38,7 +39,6 @@ def main():
     bus = DataBus()
     core = Core(bus)
     core.start_thread()
-    core.module_manager.start_modules()
 
     if core.settings.get("run_method") == "app":
         app(bus, core.module_manager.build)

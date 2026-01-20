@@ -2,7 +2,6 @@ from pathlib import Path
 
 from jarvis.core.logger import Logger
 from jarvis.managers import Manager
-from jarvis.utils.data_services import load_json
 from jarvis.modules.camera import Camera
 from jarvis.modules.hand_tracker import HandTracker
 from jarvis.modules.face_tracker import FaceTracker
