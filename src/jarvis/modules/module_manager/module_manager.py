@@ -2,10 +2,10 @@ from pathlib import Path
 
 from jarvis.core.logger import Logger
 from jarvis.managers import Manager
-from jarvis.utils.data_services import load_json
-from jarvis.modules.camera import Camera
-from jarvis.modules.hand_tracker import HandTracker
-from jarvis.modules.face_tracker import FaceTracker
+from jarvis.modules.camera import CameraNode
+from jarvis.modules.hand_tracker import HandTrackerNode
+from jarvis.modules.face_tracker import FaceTrackerNode
+from jarvis.modules.PCA9685.node import PCA9685Node
 
 MODULE_MANAGER_DIR = Path(__file__).parent
 MODULES_DIR = Path(__file__).parent.parent
