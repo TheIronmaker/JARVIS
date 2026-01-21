@@ -1,4 +1,7 @@
 {
 "name":"face_tracker",
-"render_face":false
+"render_face":false,
+"max_faces":1,
+"detection_confidence":0.6,
+"tracking_confidence":0.6
 }

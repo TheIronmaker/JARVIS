@@ -3,13 +3,13 @@ import numpy as np
 from pathlib import Path
 
 from jarvis.core.logger import Logger
-from jarvis.modules.image_processing import *
-from jarvis.modules.smooth_damp import SmoothDampArray
-from jarvis.utils.data_services import load_json
+from jarvis.utils.helpers.img import draw_text_list
+from jarvis.utils.services.smooth_damp import SmoothDampArray
+from jarvis.utils.services.json_processor import load_json
 
 DIR = Path(__file__).parent
 
-class HandTracker:
+class HandTrackerNode:
     def __init__(self, name, bus, settings):
         self.bus_global = bus
         self.bus = bus.namespaced(name)

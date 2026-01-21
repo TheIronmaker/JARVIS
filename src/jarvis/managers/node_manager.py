@@ -1,7 +1,7 @@
 from pathlib import Path
 
 from jarvis.core.logger import Logger
-from jarvis.utils.data_services import load_json, merge_dictionary
+from jarvis.utils.services.json_processor import load_json, merge_dictionary
 
 class Manager:    
     def initialize(self, classes, main_dir:tuple[Path, str], default_dir:tuple[Path, str]):
@@ -22,12 +22,14 @@ class Manager:
         if not struct.get("enabled", True):
             return None
 
+        settings = struct.get("settings", False)
+
         struct_type = struct.get("type")
         if not struct_type:
             return "Struct type not provided"
         if struct_type not in self.classes:
             return f"Class does not exist for struct type: {struct_type}"
-        if struct_type not in self.defaults:
+        if struct_type not in self.defaults and settings:
             self.defaults[struct_type] = load_json(self.default_dir[1], self.default_dir[0] / struct_type)
         
         struct_name = struct.get("name") or struct_type
@@ -36,7 +38,7 @@ class Manager:
 
         # Create class arguments
         if start_struct:
-            return self.start_node(struct_type, struct_name, package, struct.get("settings", {}))
+            return self.start_node(struct_type, struct_name, package, settings)
         
     def start_node(self, struct_type, struct_name, package, settings:dict=None):
         if settings is not False:

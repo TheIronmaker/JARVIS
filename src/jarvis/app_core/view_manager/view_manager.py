@@ -1,5 +1,4 @@
 from PySide6.QtWidgets import QHBoxLayout, QGroupBox, QSizePolicy
-from PySide6.QtCore import Qt
 from pathlib import Path
 
 from jarvis.managers import Manager

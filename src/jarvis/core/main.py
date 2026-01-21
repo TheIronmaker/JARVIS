@@ -4,7 +4,7 @@ from jarvis.core.threaded import ThreadedResource
 from jarvis.core.databus import DataBus
 from jarvis.modules import ModuleManager
 from jarvis.app_core.app import app
-from jarvis.utils.data_services import load_json
+from jarvis.utils.services.json_processor import load_json
 
 CORE_DIR = Path(__file__).parent
 

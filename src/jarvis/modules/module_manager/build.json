@@ -15,6 +15,11 @@
         "settings": {
             "max_hands":1
         }
+    },
+    {
+        "type": "PCA9685",
+        "name": "pca9685",
+        "enabled": true
     }
 ]
 }
