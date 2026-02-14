@@ -1,4 +1,5 @@
-from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QDockWidget, QSizePolicy
+from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QLabel, QDockWidget, QSizePolicy
+from PySide6.QtGui import QPainter
 from PySide6.QtCore import Qt, QTimer
 import sys
 
@@ -14,23 +15,20 @@ class MainWindow(QMainWindow):
         self.view_manager = ViewManager(self, bus)
         self._build_central()
 
-        if self.build.get("private_tests"):
-            from jarvis.private_tests.finance.view import FinanceWindow
-            self.add_dock("finance", FinanceWindow(), dock_area="right")
-
     def _build_central(self):
         self.setWindowTitle("JARVIS")
         self.setDockOptions(QMainWindow.AllowTabbedDocks)
         central = QWidget()
-        layout = QVBoxLayout()
+        layout = QHBoxLayout()
 
         # Main area
         self.workspace = QLabel("Main workspace")
         self.workspace.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-        layout.addWidget(self.workspace)
+        
 
         view_stack = self.view_manager.stack()
         if view_stack:
+            #view_stack.addWidget(self.workspace)
             layout.addLayout(view_stack)
 
         # Finishing
@@ -53,6 +51,11 @@ class MainWindow(QMainWindow):
         orientation = Qt.Horizontal if dock_area in ("left", "right") else Qt.Vertical
         self.resizeDocks([dock], [initial_size], orientation)
         self.docks[name] = dock
+    
+    def paintEvent(self, event):
+        # Handles all paint events
+        with QPainter(self) as painter:
+            self.view_manager.paint_views(event, painter)
 
 def app(*args):
     app = QApplication(sys.argv)

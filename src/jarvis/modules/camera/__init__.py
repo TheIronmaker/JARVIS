@@ -1,1 +1,1 @@
-from .node import CameraNode
+from .camera import CameraNode

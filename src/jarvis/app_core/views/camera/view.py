@@ -38,26 +38,36 @@ class CameraView(QWidget):
     def clear_links(self):
         self.settings["frame_links"] = []
     
+    def get_link(self):
+        links = self.settings.get("frame_links")
+        return links[0] if links else False
+    
+    def get_frame(self, link):
+        if not link: return False
+        # ascontiguousarray ensures frame is unbroken before updating - Threading issue
+        frame = np.ascontiguousarray(self.bus_global.get(link + ".frame"))
+        if not hasattr(frame, "shape") or len(frame.shape) < 2:
+            return False
+        return frame
+    
     def start_camera(self):
         self.parent.bus.publish("camera.create", True)
     
     def stop_camera(self):
         self.parent.bus.publish("camera.destruct", True)
     
-    def update(self):
-        links = self.settings.get("frame_links")
-        link = links[0] if links else None
-        if not link:
-            return False
+    def poll(self):
+        link = self.get_link()
+        frame = self.get_frame(link)
+        if frame is False: return
         
-        frame = self.bus_global.get(link + ".frame")
-        if frame is None or not hasattr(frame, "shape") or len(frame.shape) < 2:
-            return False
-        
-        # Ensures frame is unbroken before updating - Threading issue
-        frame = np.ascontiguousarray(frame)
         height, width = frame.shape[:2]
         qt_image = QImage(frame.tobytes(), width, height, 3 * width, QImage.Format_RGB888)
-        pixmap = QPixmap.fromImage(qt_image.copy()).scaled(self.feed.size(), Qt.KeepAspectRatio, Qt.FastTransformation)
-        self.feed.setPixmap(round_pixmap(pixmap, self.settings.get("corner_radius")))
-        return True
+
+        pixmap = QPixmap.fromImage(qt_image).scaled(
+            self.feed.size(),
+            Qt.KeepAspectRatio,
+            Qt.FastTransformation)
+        
+        radius = self.settings.get("corner_radius", 0)
+        self.feed.setPixmap(round_pixmap(pixmap, radius))

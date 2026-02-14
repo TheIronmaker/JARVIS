@@ -116,7 +116,7 @@ class SmoothDampArray:
         acc = np.where(mask, 0, acc)
         y_vel = np.where(mask, 0, y_vel)
 
-        # Integrate semi-implicit Euler
+        # Integrate Semi-Implicit Euler
         y_vel += T * acc
         y += T * y_vel
 

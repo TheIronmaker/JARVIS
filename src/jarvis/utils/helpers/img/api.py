@@ -8,19 +8,18 @@ from PySide6.QtCore import Qt
 
 
 def round_pixmap(pixmap, radius):
-    if not radius: return pixmap
-    
+    if not radius or radius <= 0: return pixmap
+
     rounded = QPixmap(pixmap.size())
     rounded.fill(Qt.transparent)
-    painter = QPainter(rounded)
-    painter.setRenderHint(QPainter.Antialiasing)
 
-    path = QPainterPath()
-    path.addRoundedRect(0, 0, pixmap.width(), pixmap.height(), radius, radius)
-    painter.setClipPath(path)
-    painter.drawPixmap(0, 0, pixmap)
-    painter.end()
-    
+    with QPainter(rounded) as painter:
+        painter.setRenderHint(QPainter.Antialiasing)
+        path = QPainterPath()
+        path.addRoundedRect(0, 0, pixmap.width(), pixmap.height(), radius, radius)
+        painter.setClipPath(path)
+        painter.drawPixmap(0, 0, pixmap)
+
     return rounded
 
 def draw_text_list(data: list[str], size, pos=(0, 0), color=(255, 255, 255), font_height=40, font_scale=1, thickness=2) -> NDArray:

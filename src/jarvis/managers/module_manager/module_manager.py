@@ -1,14 +1,14 @@
 from pathlib import Path
 
 from jarvis.core.logger import Logger
-from jarvis.managers import Manager
+from jarvis.managers.node_manager import Manager
 from jarvis.modules.camera import CameraNode
 from jarvis.modules.hand_tracker import HandTrackerNode
 from jarvis.modules.face_tracker import FaceTrackerNode
-from jarvis.modules.PCA9685.node import PCA9685Node
+from jarvis.modules.PCA9685 import PCA9685Node
 
 MODULE_MANAGER_DIR = Path(__file__).parent
-MODULES_DIR = Path(__file__).parent.parent
+MODULES_DIR = Path(__file__).parent.parent.parent / "modules"
 
 class ModuleManager(Manager):
     def __init__(self, bus):
@@ -22,8 +22,8 @@ class ModuleManager(Manager):
 
         # Create Manager Attributes
         super().__init__()
-        self.initialize(self.classes, main_dir=(MODULE_MANAGER_DIR, "build"), default_dir=(MODULES_DIR, "settings"))
-        self.load_structs(package=[bus])
+        self.initialize(self.classes, main_dir=(MODULE_MANAGER_DIR, "build"), default_dir=(MODULES_DIR, "settings"), package=[bus])
+        self.load_structs()
 
     def start_modules(self):
         return [self.start_module(name) for name in self.nodes]
@@ -43,13 +43,9 @@ class ModuleManager(Manager):
             for module in self.nodes.values():
                 if "stop_thread" in dir(module) and callable(getattr(module,'stop_thread', None)):
                     module.stop_thread()
-            return True
 
         elif name in self.nodes:
             self.nodes[name].stop_thread()
-            return True
-        
-        return False
     
     # Move to node manager
     def destruct(self, name=None):

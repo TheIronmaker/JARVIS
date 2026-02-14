@@ -2,7 +2,7 @@ from pathlib import Path
 
 from jarvis.core.threaded import ThreadedResource
 from jarvis.core.databus import DataBus
-from jarvis.modules import ModuleManager
+from jarvis.managers.module_manager import ModuleManager
 from jarvis.app_core.app import app
 from jarvis.utils.services.json_processor import load_json
 

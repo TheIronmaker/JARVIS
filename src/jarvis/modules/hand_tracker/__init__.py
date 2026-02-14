@@ -1,1 +1,1 @@
-from .node import HandTrackerNode
+from .hand_tracker import HandTrackerNode

@@ -1,0 +1,14 @@
+{
+"links": ["PCA9685_view"],
+"poll_ms": 100,
+"view_box": true,
+"corner_radius": 6,
+"num_channels": 16,
+"grid_config": {
+    "cols": 4,
+    "rows": 4,
+    "left_margin": 28,
+    "text_min": 6,
+    "text_max": 18
+}
+}

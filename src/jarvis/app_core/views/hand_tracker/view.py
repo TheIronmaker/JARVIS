@@ -46,7 +46,7 @@ class HandTrackerView(QWidget):
         img = QImage(frame.data, w, h, ch * w, QImage.Format_RGB888)
         return QPixmap.fromImage(img)
     
-    def update(self):
+    def poll(self):
         link = self.settings.get("frame_link")
         self.update_frame(self.readout, self.bus.get("coordinates_overlay"))
         #self.update_frame(self.rotation_coor, self.bus.get("palm_gizmo"))

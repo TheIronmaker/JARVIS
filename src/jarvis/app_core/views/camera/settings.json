@@ -1,5 +1,5 @@
 {
-    "frame_link": "camera",
+    "frame_link": "camera_view",
     "corner_radius": 12,
     "view_box":true
 }

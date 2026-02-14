@@ -15,6 +15,17 @@
         "settings": {
             "frame_links": ["hand_tracker"]
         }
+    },
+    {
+        "type": "PCA9685",
+        "name": "PCA9685",
+        "enabled": false,
+        "settings":{}
+    },
+    {
+        "type": "servo_updater",
+        "name": "servo_updater",
+        "enabled": false
     }
 ]
 

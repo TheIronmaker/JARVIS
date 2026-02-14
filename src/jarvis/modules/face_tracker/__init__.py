@@ -1,1 +1,1 @@
-from .node import FaceTrackerNode
+from .face_tracker import FaceTrackerNode

@@ -18,7 +18,7 @@
     },
     {
         "type": "PCA9685",
-        "name": "pca9685",
+        "name": "PCA9685",
         "enabled": true
     }
 ]
