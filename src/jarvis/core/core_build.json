@@ -4,7 +4,12 @@
     "name":"central_build",
     "start_thread": true,
     "run_method":"app",
-    "cycle_time":0.01,
+    "private_tests":false
+    },
+    {
+    "name":"central_build2",
+    "run_method":"terminal",
+    "enabled": false,
     "private_tests":false
     }
 ]

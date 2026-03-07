@@ -5,7 +5,7 @@
         "name": "camera",
         "enabled": true,
         "settings": {
-            "cycle_time": 0.008
+            "cycle_time": 0.016
         }
     },
     {

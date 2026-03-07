@@ -5,7 +5,7 @@ from jarvis.core.logger import Logger
 
 class ThreadedResource:
     def __init__(self, cycle_time=None, name=None, daemon=False):
-        self.cycle_time = cycle_time or 0.01
+        self.cycle_time = cycle_time or 0.008
         self.stop_event = threading.Event()
         self.thread = None
         self.daemon = daemon

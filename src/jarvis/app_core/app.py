@@ -12,10 +12,9 @@ from jarvis.utils.services.json_processor import load_json
 BUILDS_PATH = Path(__file__).parent / "app_builds"
 
 class MainWindow(QMainWindow):
-    def __init__(self, bus, module_build):
+    def __init__(self, bus):
         super().__init__()
         self.bus = bus
-        self.module_build = module_build
 
         self.build = load_json("app_build", BUILDS_PATH)
         self.view_managers = {}

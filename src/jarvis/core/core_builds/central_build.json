@@ -1,3 +1,9 @@
 {
-    "cycle_time": 0.01
+    "cycle_time": 0.01,
+    "module_managers": [
+        {
+            "name": "central_build",
+            "enabled": true
+        }
+    ]
 }
