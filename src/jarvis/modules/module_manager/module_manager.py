@@ -17,7 +17,7 @@ class ModuleManager(Manager):
         super().__init__()
         self.initialize(self.classes, package=[bus])
         self.load_build(main_dir=("build", MODULE_MANAGER_DIR))
-        self.load_structs(default_dir=(MODULES_DIR, "settings"))
+        self.load_structs(default_dir=("settings", MODULES_DIR))
 
     def start_modules(self):
         return [self.start_module(name) for name in self.nodes]

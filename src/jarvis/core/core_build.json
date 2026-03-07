@@ -1,0 +1,11 @@
+{
+"instances": [
+    {
+    "name":"central_build",
+    "start_thread": true,
+    "run_method":"app",
+    "cycle_time":0.01,
+    "private_tests":false
+    }
+]
+}

@@ -9,20 +9,21 @@ from jarvis.core.logger import Logger
 from jarvis.managers.node_manager import Manager
 import jarvis.app_core.views as app_views
 
-VIEW_MANAGER_DIR = Path(__file__).parent
+VIEW_MANAGER_DIR = Path(__file__).parent / "builds"
 VIEWS_DIR = Path(__file__).parent.parent
 
 class ViewManager(Manager):
-    def __init__(self, parent, bus):
+    def __init__(self, parent, bus, name):
         self.parent = parent
         self.bus = bus
+        self.name = name
         self.classes = app_views.__all__
         
         # Create Manager Attributes
         super().__init__()
         self.initialize(self.classes, package=[parent])
-        self.load_build(main_dir=("build", VIEW_MANAGER_DIR))
-        self.load_structs(default_dir=(VIEWS_DIR, "settings"))
+        self.load_build(main_dir=(self.name, VIEW_MANAGER_DIR))
+        self.load_structs(default_dir=("settings", VIEWS_DIR))
 
         # Setup Views
         self.setup_view_timers()

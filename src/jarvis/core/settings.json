@@ -1,6 +1,0 @@
-{
-    "name":"core",
-    "run_method":"app",
-    "cycle_time":0.01,
-    "private_tests":false
-}

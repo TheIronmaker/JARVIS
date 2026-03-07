@@ -16,7 +16,7 @@ class Manager:
     def load_build(self, main_dir:tuple[str, Path]):
         self.build = load_json(*main_dir)
 
-    def load_structs(self, package=[], default_dir:tuple[Path, str]=None, start_structs:bool=True):
+    def load_structs(self, package=[], default_dir:tuple[str, Path]=None, start_structs:bool=True):
         if package:
             self.package = package
 
@@ -45,7 +45,7 @@ class Manager:
         if struct_type not in self.classes:
             return f"Class does not exist for struct type: {struct_type}"
         if struct_type not in self.defaults and settings is not None and self.default_dir is not None: # None means settings are disabled from struct's build settings
-            self.defaults[struct_type] = load_json(self.default_dir[1], self.default_dir[0] / struct_type)
+            self.defaults[struct_type] = load_json(self.default_dir[0], self.default_dir[1] / struct_type)
         
         struct_name = struct.get("name") or struct_type
         if struct_name in self.nodes:

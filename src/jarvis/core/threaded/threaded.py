@@ -28,7 +28,8 @@ class ThreadedResource:
         if self.thread and self.thread != threading.current_thread():
             self.thread.join()
             if not self.thread.is_alive():
-                Logger.info(f"Thread Shut down: {self.name}")
+                pass
+                #Logger.info(f"Thread Shut down: {self.name}")
         try:
             self.close()
         except Exception as e:

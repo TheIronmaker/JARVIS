@@ -5,6 +5,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, Q
 from PySide6.QtGui import QPainter
 from PySide6.QtCore import Qt, QTimer
 
+from jarvis.core.logger import Logger
 from jarvis.app_core.views import ViewManager
 from jarvis.utils.services.json_processor import load_json
 
@@ -26,7 +27,11 @@ class MainWindow(QMainWindow):
     def load_view_managers(self):
         for manager in self.build.get("view_managers", []):
             if manager.get("enabled", True):
-                self.view_managers[manager["name"]] = ViewManager(self, self.bus)
+                name = manager.get("name")
+                if not name:
+                    Logger.error("View manager build missing name. Skipping.")
+                    continue
+                self.view_managers[name] = ViewManager(self, self.bus, name)
 
     def _build_central(self):
         self.setWindowTitle("JARVIS")
@@ -39,7 +44,6 @@ class MainWindow(QMainWindow):
         self.workspace.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
         # Will need to add layout configurations and more complex stacking options through config files
-
         for view_manager in self.view_managers.values():
             view_stack = view_manager.stack()
             if view_stack:
