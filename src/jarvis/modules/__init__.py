@@ -1,3 +1,5 @@
+from .module_manager import ModuleManager
+
 from .atom_sim import AtomSimNode
 from .camera import CameraNode
 from .hand_tracker import HandTrackerNode

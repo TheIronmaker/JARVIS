@@ -3,7 +3,7 @@ from PySide6.QtGui import QPainter
 from PySide6.QtCore import Qt, QTimer
 import sys
 
-from jarvis.app_core.view_manager import ViewManager
+from jarvis.app_core.views import ViewManager
 
 class MainWindow(QMainWindow):
     def __init__(self, bus, build):

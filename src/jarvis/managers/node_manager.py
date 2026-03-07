@@ -4,18 +4,23 @@ from jarvis.core.logger import Logger
 from jarvis.utils.services.json_processor import load_json, merge_dictionary
 
 class Manager:    
-    def initialize(self, classes, main_dir:tuple[Path, str], default_dir:tuple[Path, str], package=[]):
+    def initialize(self, classes, package=[]):
         self.classes = classes
         self.package = package
-        self.default_dir = default_dir
-        self.build = load_json(main_dir[1], main_dir[0])
+        self.default_dir = None
         self.defaults = {}
         self.nodes = {}
+    
+    def load_build(self, main_dir:tuple[Path, str]):
+        self.build = load_json(main_dir[1], main_dir[0])
 
-    def load_structs(self, package=[], start_structs:bool=True):
+    def load_structs(self, package=[], default_dir:tuple[Path, str]=None, start_structs:bool=True):
         if package:
             self.package = package
-        
+
+        if default_dir:
+            self.default_dir = default_dir
+
         # May include dynamic way to load many builds and select which one to load about here or a layer above
         for struct in self.build.get("instances", []):
             msg = self.construct(struct, start_struct=start_structs)
@@ -37,7 +42,7 @@ class Manager:
             return "Struct type not provided"
         if struct_type not in self.classes:
             return f"Class does not exist for struct type: {struct_type}"
-        if struct_type not in self.defaults and settings is not None: # None means settings are disabled from struct's build settings
+        if struct_type not in self.defaults and settings is not None and self.default_dir is not None: # None means settings are disabled from struct's build settings
             self.defaults[struct_type] = load_json(self.default_dir[1], self.default_dir[0] / struct_type)
         
         struct_name = struct.get("name") or struct_type

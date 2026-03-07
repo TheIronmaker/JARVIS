@@ -1,1 +1,1 @@
-from .view import ModuleViewer
+from .view import ModuleOrganizerView

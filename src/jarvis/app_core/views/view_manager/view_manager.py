@@ -1,35 +1,30 @@
+import traceback
+from pathlib import Path
+
 from PySide6.QtWidgets import QHBoxLayout, QGroupBox, QSizePolicy
 from PySide6.QtGui import QPainter
 from PySide6.QtCore import QTimer
-from pathlib import Path
 
-import traceback
-
-from jarvis.managers.node_manager import Manager
 from jarvis.core.logger import Logger
-from jarvis.app_core.views.camera.view import CameraView
-from jarvis.app_core.views.hand_tracker.view import HandTrackerView
-from jarvis.app_core.views.PCA9685 import PCA9685View, ServoUpdaterView
+from jarvis.managers.node_manager import Manager
+import jarvis.app_core.views as app_views
 
 VIEW_MANAGER_DIR = Path(__file__).parent
-VIEWS_DIR = Path(__file__).parent.parent.parent / "app_core" / "views"
+VIEWS_DIR = Path(__file__).parent.parent
 
 class ViewManager(Manager):
     def __init__(self, parent, bus):
-        # Load classes and build
         self.parent = parent
         self.bus = bus
-        self.classes = {
-            "camera": CameraView,
-            "hand_tracker":HandTrackerView,
-            "PCA9685":PCA9685View,
-            "ServoUpdater":ServoUpdaterView
-            }
+        self.classes = app_views.__all__
         
         # Create Manager Attributes
         super().__init__()
-        self.initialize(self.classes, main_dir=(VIEW_MANAGER_DIR, "build"), default_dir=(VIEWS_DIR, "settings"))
-        self.load_structs(package=[parent])
+        self.initialize(self.classes, package=[parent])
+        self.load_build(main_dir=(VIEW_MANAGER_DIR, "build"))
+        self.load_structs(default_dir=(VIEWS_DIR, "settings"))
+
+        # Setup Views
         self.setup_view_timers()
 
     def create_view_box(self, view):

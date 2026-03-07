@@ -3,20 +3,21 @@ from pathlib import Path
 
 from jarvis.core.logger import Logger
 from jarvis.managers.node_manager import Manager
-import jarvis.modules
+import jarvis.modules as modules
 
 MODULE_MANAGER_DIR = Path(__file__).parent
-MODULES_DIR = Path(__file__).parent.parent.parent / "modules"
+MODULES_DIR = Path(__file__).parent.parent
 
 class ModuleManager(Manager):
     def __init__(self, bus):
         self.bus = bus
-        self.classes = jarvis.modules.__all__
+        self.classes = modules.__all__
 
         # Create Manager Attributes
         super().__init__()
-        self.initialize(self.classes, main_dir=(MODULE_MANAGER_DIR, "build"), default_dir=(MODULES_DIR, "settings"), package=[bus])
-        self.load_structs()
+        self.initialize(self.classes, package=[bus])
+        self.load_build(main_dir=(MODULE_MANAGER_DIR, "build"))
+        self.load_structs(default_dir=(MODULES_DIR, "settings"))
 
     def start_modules(self):
         return [self.start_module(name) for name in self.nodes]

@@ -1,14 +1,19 @@
-from PySide6.QtWidgets import QWidget
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy
+from PySide6.QtGui import QPixmap
 
-from jarvis.core.logger import Logger
 
-class ModuleViewer:
-    def __init__(self, parent, settings):
-        if not isinstance(settings, dict) or not settings:
-            return False
+class ModuleOrganizerView(QWidget):
+    def __init__(self, name, parent, settings):
         super().__init__(parent)
+        self.name = name
         self.parent = parent
         self.settings = settings
-        self.name = settings.get("name")
-        self.bus = parent.bus.namespaced(self.name)
-        self.settings = settings["module_manager_view"]
+
+        self.bus_global = parent.bus
+        self.bus = parent.bus.namespaced(name)
+
+        self.mapping: dict[QLabel, QPixmap | None] = {}
+
+        self.layout = QVBoxLayout(self)
+        self.layout.setContentsMargins(0, 0, 0, 0)
+        self.layout.setSpacing(2)
