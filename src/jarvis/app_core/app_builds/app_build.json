@@ -1,0 +1,9 @@
+{
+"view_managers": [
+    {
+        "type": "view_manager",
+        "name": "central_command",
+        "enabled": true
+    }
+]
+}

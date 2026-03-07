@@ -1,35 +1,50 @@
+import sys
+from pathlib import Path
+
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QLabel, QDockWidget, QSizePolicy
 from PySide6.QtGui import QPainter
 from PySide6.QtCore import Qt, QTimer
-import sys
 
 from jarvis.app_core.views import ViewManager
+from jarvis.utils.services.json_processor import load_json
+
+BUILDS_PATH = Path(__file__).parent / "app_builds"
 
 class MainWindow(QMainWindow):
-    def __init__(self, bus, build):
+    def __init__(self, bus, module_build):
         super().__init__()
         self.bus = bus
-        self.build = build
+        self.module_build = module_build
+
+        self.build = load_json("app_build", BUILDS_PATH)
+        self.view_managers = {}
         self.docks = {}
 
-        self.view_manager = ViewManager(self, bus)
+        self.load_view_managers()
         self._build_central()
+    
+    def load_view_managers(self):
+        for manager in self.build.get("view_managers", []):
+            if manager.get("enabled", True):
+                self.view_managers[manager["name"]] = ViewManager(self, self.bus)
 
     def _build_central(self):
         self.setWindowTitle("JARVIS")
         self.setDockOptions(QMainWindow.AllowTabbedDocks)
         central = QWidget()
-        layout = QHBoxLayout()
+        layout = QHBoxLayout() # Will need config driven approach
 
         # Main area
         self.workspace = QLabel("Main workspace")
         self.workspace.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
+        # Will need to add layout configurations and more complex stacking options through config files
 
-        view_stack = self.view_manager.stack()
-        if view_stack:
-            #view_stack.addWidget(self.workspace)
-            layout.addLayout(view_stack)
+        for view_manager in self.view_managers.values():
+            view_stack = view_manager.stack()
+            if view_stack:
+                #view_stack.addWidget(self.workspace)
+                layout.addLayout(view_stack)
 
         # Finishing
         central.setLayout(layout)
@@ -53,9 +68,10 @@ class MainWindow(QMainWindow):
         self.docks[name] = dock
     
     def paintEvent(self, event):
-        # Handles all paint events
+        # Handles all paint events. PySide6 painter may only be used within this function
         with QPainter(self) as painter:
-            self.view_manager.paint_views(event, painter)
+            for view_manager in self.view_managers.values():
+                view_manager.paint_views(event, painter)
 
 def app(*args):
     app = QApplication(sys.argv)
@@ -65,7 +81,8 @@ def app(*args):
 
     timer = QTimer()
     timer.setInterval(10)
-    timer.timeout.connect(window.view_manager.update)
+    for view_manager in window.view_managers.values():
+        timer.timeout.connect(view_manager.update)
     timer.start()
 
     app.exec()

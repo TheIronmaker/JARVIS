@@ -21,7 +21,7 @@ class ViewManager(Manager):
         # Create Manager Attributes
         super().__init__()
         self.initialize(self.classes, package=[parent])
-        self.load_build(main_dir=(VIEW_MANAGER_DIR, "build"))
+        self.load_build(main_dir=("build", VIEW_MANAGER_DIR))
         self.load_structs(default_dir=(VIEWS_DIR, "settings"))
 
         # Setup Views

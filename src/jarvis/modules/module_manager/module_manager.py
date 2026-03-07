@@ -16,7 +16,7 @@ class ModuleManager(Manager):
         # Create Manager Attributes
         super().__init__()
         self.initialize(self.classes, package=[bus])
-        self.load_build(main_dir=(MODULE_MANAGER_DIR, "build"))
+        self.load_build(main_dir=("build", MODULE_MANAGER_DIR))
         self.load_structs(default_dir=(MODULES_DIR, "settings"))
 
     def start_modules(self):

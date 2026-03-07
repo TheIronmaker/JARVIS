@@ -7,12 +7,14 @@ class Manager:
     def initialize(self, classes, package=[]):
         self.classes = classes
         self.package = package
+        self.main_dir = None
         self.default_dir = None
         self.defaults = {}
+        self.build = {}
         self.nodes = {}
     
-    def load_build(self, main_dir:tuple[Path, str]):
-        self.build = load_json(main_dir[1], main_dir[0])
+    def load_build(self, main_dir:tuple[str, Path]):
+        self.build = load_json(*main_dir)
 
     def load_structs(self, package=[], default_dir:tuple[Path, str]=None, start_structs:bool=True):
         if package:
