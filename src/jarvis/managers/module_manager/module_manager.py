@@ -1,11 +1,9 @@
+import importlib
 from pathlib import Path
 
 from jarvis.core.logger import Logger
 from jarvis.managers.node_manager import Manager
-from jarvis.modules.camera import CameraNode
-from jarvis.modules.hand_tracker import HandTrackerNode
-from jarvis.modules.face_tracker import FaceTrackerNode
-from jarvis.modules.PCA9685 import PCA9685Node
+import jarvis.modules
 
 MODULE_MANAGER_DIR = Path(__file__).parent
 MODULES_DIR = Path(__file__).parent.parent.parent / "modules"
@@ -13,12 +11,7 @@ MODULES_DIR = Path(__file__).parent.parent.parent / "modules"
 class ModuleManager(Manager):
     def __init__(self, bus):
         self.bus = bus
-        self.classes = {
-            "camera": CameraNode,
-            "hand_tracker": HandTrackerNode,
-            "face_tracker": FaceTrackerNode,
-            "PCA9685": PCA9685Node
-        }
+        self.classes = jarvis.modules.__all__
 
         # Create Manager Attributes
         super().__init__()

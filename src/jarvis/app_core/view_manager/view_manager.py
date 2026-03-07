@@ -3,6 +3,8 @@ from PySide6.QtGui import QPainter
 from PySide6.QtCore import QTimer
 from pathlib import Path
 
+import traceback
+
 from jarvis.managers.node_manager import Manager
 from jarvis.core.logger import Logger
 from jarvis.app_core.views.camera.view import CameraView
@@ -89,5 +91,5 @@ class ViewManager(Manager):
             try:
                 if not hasattr(view, "timer"):
                     view.poll()
-            except Exception as e:
-                Logger.warning(f"Unable to update {name} view: {e}")
+            except Exception:
+                Logger.warning(f"Unable to update {name} view. Full error: {traceback.format_exc()}")

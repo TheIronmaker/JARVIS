@@ -13,7 +13,9 @@
         "name": "hand_tracker",
         "enabled": true,
         "settings": {
-            "max_hands":1
+            "max_hands":2,
+            "detection_confidence":0.7,
+            "tracking_confidence":0.4
         }
     },
     {

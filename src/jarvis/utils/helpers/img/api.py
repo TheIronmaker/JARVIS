@@ -3,7 +3,7 @@ from numpy.typing import NDArray
 import cv2
 import math
 
-from PySide6.QtGui import QPixmap, QPainter, QPainterPath
+from PySide6.QtGui import QImage, QPixmap, QPainter, QPainterPath
 from PySide6.QtCore import Qt
 
 
@@ -62,3 +62,8 @@ def get_frame(links:list, bus):
         links = links[1:]
 
     return None
+
+def frame_to_pixmap(frame):
+    h, w, ch = frame.shape
+    img = QImage(frame.data, w, h, ch * w, QImage.Format_RGB888)
+    return QPixmap.fromImage(img)   

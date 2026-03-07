@@ -5,7 +5,7 @@
         "name": "camera",
         "enabled": true,
         "settings": {
-            "frame_links": ["hand_tracker", "camera"]
+            "frame_links": ["camera", "hand_tracker"]
         }
     },
     {

@@ -40,7 +40,7 @@ class HandTrackerNode:
     def link_camera(self, link:list, placement:int=None):
         if placement:
             self.settings["frame_links"].remove(link).insert(placement, link)
-        self.bus_global.subscribe(link+".frame", self.main_process)
+        self.bus_global.subscribe(link[0]+".frame", self.main_process)
     
     def main_process(self, frame):
         if frame is None: return False

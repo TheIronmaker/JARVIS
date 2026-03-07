@@ -5,7 +5,7 @@ from PySide6.QtCore import Qt
 import numpy as np
 
 from jarvis.app_core.gui_elements import DisplaySlider
-from jarvis.utils.helpers.img import get_frame
+from jarvis.utils.helpers.img import get_frame, frame_to_pixmap
 
 class HandTrackerView(QWidget):
     def __init__(self, name, parent, settings):
@@ -42,12 +42,6 @@ class HandTrackerView(QWidget):
         self.layout.addWidget(label)
         self.mapping[label] = None
         return label
-
-    @staticmethod
-    def _frame_to_pixmap(frame): # Move to image_processing
-        h, w, ch = frame.shape
-        img = QImage(frame.data, w, h, ch * w, QImage.Format_RGB888)
-        return QPixmap.fromImage(img)
     
     def poll(self):
         links = self.settings.get("frame_links")
@@ -56,6 +50,7 @@ class HandTrackerView(QWidget):
         #self.slider.set_value(self.bus.get("slider_value", 0))
 
     def update_frame(self, label: QLabel, frame):
-        if not frame or label not in self.mapping: return
-        self.mapping[label] = self._frame_to_pixmap(frame)
-        self.rescale()
+        if isinstance(frame, np.ndarray) and label in self.mapping:
+            pixmap = frame_to_pixmap(frame)
+            self.mapping[label] = pixmap
+            label.setPixmap(pixmap.scaled(label.size(), Qt.KeepAspectRatio, Qt.FastTransformation))
