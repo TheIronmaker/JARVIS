@@ -31,14 +31,16 @@ class HandTrackerNode:
         self.array = np.zeros((21, 3))
         self.math = Math(self)
 
-        self.link_camera(self.settings.get("linked_camera"))
+        self.link_camera(self.settings.get("frame_links", []))
 
-    def link_camera(self, link:str):
-        if link and isinstance(link, str):
-            self.settings["linked_camera"] = link
-            link += ".frame"
-            self.bus_global.unsubscribe(link, error=False)
-            self.bus_global.subscribe(link, self.main_process)
+    def relink(self, links:list):
+        self.bus_global.unsubscribe([l for l in links], error=False)
+        self.bus_global.subscribe(links[0]+".frame", self.main_process)
+    
+    def link_camera(self, link:list, placement:int=None):
+        if placement:
+            self.settings["frame_links"].remove(link).insert(placement, link)
+        self.bus_global.subscribe(link+".frame", self.main_process)
     
     def main_process(self, frame):
         if frame is None: return False
@@ -141,7 +143,7 @@ class Math:
 
         readout = []
         for p, (x, y, z) in enumerate(self.data[version]):
-            coords = [int(v) for v in [x, y, z]]
+            coords = [int(v*1000) for v in [x, y, z]]
             pads = [" " * abs(4 - len(str(c))) for c in coords]
             readout.append(f"X: {coords[0]},{pads[0]} Y: {coords[1]},{pads[1]} Z: {coords[2]},{pads[2]} | Point ID: {p}")
         

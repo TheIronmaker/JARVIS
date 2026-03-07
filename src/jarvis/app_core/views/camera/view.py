@@ -4,7 +4,7 @@ from PySide6.QtCore import Qt
 
 import numpy as np
 
-from jarvis.utils.helpers.img import round_pixmap
+from jarvis.utils.helpers.img import round_pixmap, get_frame
 from jarvis.app_core.gui_elements import ButtonStack
 
 class CameraView(QWidget):
@@ -38,18 +38,6 @@ class CameraView(QWidget):
     def clear_links(self):
         self.settings["frame_links"] = []
     
-    def get_link(self):
-        links = self.settings.get("frame_links")
-        return links[0] if links else False
-    
-    def get_frame(self, link):
-        if not link: return False
-        # ascontiguousarray ensures frame is unbroken before updating - Threading issue
-        frame = np.ascontiguousarray(self.bus_global.get(link + ".frame"))
-        if not hasattr(frame, "shape") or len(frame.shape) < 2:
-            return False
-        return frame
-    
     def start_camera(self):
         self.parent.bus.publish("camera.create", True)
     
@@ -57,9 +45,9 @@ class CameraView(QWidget):
         self.parent.bus.publish("camera.destruct", True)
     
     def poll(self):
-        link = self.get_link()
-        frame = self.get_frame(link)
-        if frame is False: return
+        links = self.settings.get("frame_links")
+        frame = get_frame(links, self.bus_global)
+        if frame is None: return
         
         height, width = frame.shape[:2]
         qt_image = QImage(frame.tobytes(), width, height, 3 * width, QImage.Format_RGB888)

@@ -1,5 +1,7 @@
 # Application
 ## app_core
+Boot loader that checks for if the selected "build.json" works. Ability to view and select different builds from the boot loader, and then it loads them with the ability to set the default build.
+
 Layout orchestrator + layout build.json for placement of views and other types. it handles the placement of everything into the application, but not the creation of those views etc. itself. It's the glue.a
 
 ## Hand Tracking 🔲 ✅

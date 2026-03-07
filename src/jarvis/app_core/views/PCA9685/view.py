@@ -11,6 +11,8 @@ class PCA9685View(QWidget):
         self.bus_global = parent.bus
         self.bus = parent.bus.namespaced(name)
 
+        self.container = None
+
         self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
         # Data Handling
@@ -41,6 +43,16 @@ class PCA9685View(QWidget):
         p = painter
         p.setRenderHint(QPainter.Antialiasing)
 
+        p.setBrush(QColor(209, 180, 56))
+        p.setPen(Qt.NoPen)
+        #print(self.geometry().getCoords()[:2])
+        if self.container:
+            rect_box = QRectF(*self.container.geometry().getCoords()[:2], *self.geometry().getCoords()[2:4])
+            rect_box.adjust(0, 0, 0, 0)
+        else:
+            rect_box = QRectF(*self.geometry().getCoords()[:2], *self.geometry().getCoords()[2:4])
+        p.drawRoundedRect(rect_box, 0, 0)
+
         # Math + Data
         config = self.settings.get("grid_config")
         left_margin = config.get("left_margin")
@@ -62,8 +74,8 @@ class PCA9685View(QWidget):
             row = i // cols
             col = i % cols
 
-            x = left_margin + col * cell_w
-            y = row * cell_h
+            x = left_margin + col * cell_w + self.x()
+            y = row * cell_h + self.y()
 
             color = QColor(60, 200, 90) if self.values[i] > 0 else QColor(50, 50, 50)
             rect = QRectF(x+4, y+4, cell_w-8, cell_h-8)
@@ -80,4 +92,18 @@ class PCA9685View(QWidget):
         for g in range(4):
             y = g * cell_h + cell_h * 0.65
             p.drawText(6, int(y), f"G{g+1}")
-        
+
+
+
+    def NEWpaint(self, painter: QPainter):
+        p = painter
+
+        # Math and Data
+        config = self.settings.get("grid_config")
+        cols = config["cols"]
+        rows = config["rows"]
+        aspect_ratio = int(cols // rows)
+
+        for i in range(self.channel_count):
+            rect = QRectF()
+            p.drawRoundedRect()

@@ -33,7 +33,6 @@ class ViewManager(Manager):
     def create_view_box(self, view):
         layout = QHBoxLayout()
         layout.addWidget(view)
-        layout.setContentsMargins(2, 2, 2, 2)
 
         view_box = QGroupBox()
         view_box.setLayout(layout)
@@ -47,10 +46,13 @@ class ViewManager(Manager):
         for view in self.nodes.values():
             view.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
 
+            # For specific separation of container vs view
+            container = None
             if hasattr(view, "settings") and view.settings.get("view_box"):
-                view = self.create_view_box(view)
+                container = self.create_view_box(view)
+                view.container = container
 
-            layout.addWidget(view)
+            layout.addWidget(container or view)
         return layout
     
     def setup_view_timers(self):

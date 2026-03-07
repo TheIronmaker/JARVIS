@@ -48,3 +48,17 @@ def render_gizmo(R: np.ndarray, size, thickness=6, scale=0.2):
         cv2.line(overlay, (sw, sh), (sw - dx, sh - dy), color, thickness)
 
     return overlay
+
+def get_frame(links:list, bus):
+    if not links: return False
+
+    frame = None
+    while len(links) > 0:
+        # ascontiguousarray ensures frame is unbroken before updating - Threading issue
+        frame = np.ascontiguousarray(bus.get(links[0] + ".frame"))
+        if hasattr(frame, "shape") and len(frame.shape) >= 2:
+            return frame
+        
+        links = links[1:]
+
+    return None

@@ -1,1 +1,3 @@
-{}
+{
+"frame_links": ["hand_tracker"]
+}

@@ -34,6 +34,11 @@ class DataBus:
     def unsubscribe(self, topic, error=True):
         with self._lock:
             try:
+                if isinstance(topic, str):
+                    del self._subs[topic]
+                else:
+                    for t in topic:
+                        del self._subs[t]
                 del self._subs[topic]
             except:
                 if error:

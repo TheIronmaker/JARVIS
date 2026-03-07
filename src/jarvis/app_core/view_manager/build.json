@@ -5,7 +5,7 @@
         "name": "camera",
         "enabled": true,
         "settings": {
-            "frame_links": ["camera"]
+            "frame_links": ["hand_tracker", "camera"]
         }
     },
     {
@@ -20,7 +20,9 @@
         "type": "PCA9685",
         "name": "PCA9685",
         "enabled": false,
-        "settings":{}
+        "settings":{
+            "view_box": true
+        }
     },
     {
         "type": "servo_updater",
