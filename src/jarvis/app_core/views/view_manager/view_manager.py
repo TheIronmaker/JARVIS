@@ -85,7 +85,7 @@ class ViewManager(Manager):
     def update(self):
         for name, view in self.nodes.items():
             try:
-                if not hasattr(view, "timer"):
+                if not hasattr(view, "timer") and hasattr(view, "poll"):
                     view.poll()
             except Exception:
                 Logger.warning(f"Unable to update {name} view. Full error: {traceback.format_exc()}")
