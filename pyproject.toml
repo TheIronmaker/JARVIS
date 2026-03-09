@@ -10,7 +10,7 @@ authors = [{name = "Andy"}]
 dependencies = [
     "PySide6",
     "mediapipe",
-    "opencv-python"
+    "opencv-python",
     "adafruit-circuitpython-servokit"
 ]
 
