@@ -50,6 +50,7 @@ class MainWindow(QMainWindow):
                 layout.addLayout(view_stack)
 
         # Finishing
+        layout.setContentsMargins(0, 0, 0, 0)
         central.setLayout(layout)
         self.setCentralWidget(central)
 

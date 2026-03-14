@@ -39,7 +39,8 @@ class CameraView(QWidget):
         self.settings["frame_links"] = []
     
     def start_camera(self):
-        self.parent.bus.publish("camera.create", True)
+        # Later, create ability to create camera with special settings through pop-up-type interface.
+        self.parent.bus.publish("create", {"type":"camera", "name":self.name})
     
     def stop_camera(self):
         self.parent.bus.publish("camera.destruct", True)
