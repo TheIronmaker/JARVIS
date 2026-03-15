@@ -66,14 +66,13 @@ class Triangle:
         self.size = size
         self._create_triangle(size)
 
-    def _create_triangle(self, size:float=None):
-        if size is not None:
-            self.size = size
+    def _create_triangle(self, change:float=0):
         
         # Scale the vertex positions by the specified size
-        self.vertices[0:3] = self.vertices[0:3] * self.size
-        self.vertices[6:9] = self.vertices[6:9] * self.size
-        self.vertices[12:15] = self.vertices[12:15] * self.size
+        self.vertices[0:3] = self.vertices[0:3] * change
+        self.vertices[6:9] = self.vertices[6:9] * change
+        self.vertices[12:15] = self.vertices[12:15] * change
+        print(self.size)
         
         # fmt: off | on ?
         # allocate a VertexArray
@@ -252,6 +251,7 @@ class OpenGLApple(QOpenGLWidget):
         self.fragment_shader = FRAGMENT_SHADER
 
         self.shader_id = None
+        self.polygon_mode = gl.GL_FILL
     
     def check_shader_compilation_status(self, shader_id):
         if not gl.glGetShaderiv(shader_id, gl.GL_COMPILE_STATUS):
@@ -309,6 +309,9 @@ class OpenGLApple(QOpenGLWidget):
         ratio = self.devicePixelRatio()
         gl.glViewport(0, 0, int(self.width() * ratio), int(self.height() * ratio))
 
+        # Set Draw modes
+        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, self.polygon_mode)
+
         # Clear the colour and depth buffers from the previous frame
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
@@ -328,12 +331,48 @@ class OpenGLApple(QOpenGLWidget):
 
         # Any glViewport or glClear calls should be made in paintGL to ensure they are applied every frame, especially after window resizing.
 
+    def keyPressEvent(self, event) -> None:
+        """
+        Handles keyboard press events.
+
+        Args:
+            event: The QKeyEvent object containing information about the key press.
+        """
+        key = event.key()
+        if key == Qt.Key_Escape:
+            self.close()
+
+        elif key == Qt.Key_W:
+            self.polygon_mode = gl.GL_LINE # Wireframe mode
+        elif key == Qt.Key_S:
+            self.polygon_mode = gl.GL_FILL # Solid fill mode
+        
+        elif key == Qt.Key_A:
+            self.triangle._create_triangle(self.triangle.size + 0.1)
+            #self.triangle.vertices[7:10] += 0.1
+            #self.triangle._create_triangle(self.triangle.size)
+        
+        elif key == Qt.Key_D:
+            self.triangle._create_triangle(self.triangle.size - 0.1)
+            #self.triangle.vertices[7:10] -= 0.1
+            #self.triangle._create_triangle(self.triangle.size)
+
+        # Trigger a redraw to apply changes
+        self.update()
+        # Call the base class implementation for any unhandled events
+        super().keyPressEvent(event)
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("OpenGL Apple Test Suite")
         self.opengl_widget = OpenGLApple(self)
         self.setCentralWidget(self.opengl_widget)
+    
+    def keyPressEvent(self, event):
+        # Forward key events to the OpenGL widget for handling
+        self.opengl_widget.keyPressEvent(event)
+        super().keyPressEvent(event)
 
 class DebugApplication(QApplication):
     """
