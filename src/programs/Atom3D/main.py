@@ -51,6 +51,18 @@ VERTEX_DATA = np.array([
             ],dtype=np.float32)
 
 
+def set_QSurfaceFormat():
+    format: QSurfaceFormat = QSurfaceFormat()
+    format.setSamples(4) # Request 4x multisampling for anti-aliasing
+    format.setMajorVersion(4) # Request OpenGL version 4.1 as the highest supported version by macOS
+    format.setMinorVersion(1)
+    format.setProfile(QSurfaceFormat.CoreProfile) # Request a Core Profile context, which removes deprecated features
+    format.setDepthBufferSize(24) # Request a 24-bit depth buffer for better z-depth precision
+
+    # Set default format for all QSurface instances (QOpenGLWidget, QOpenGLWindow, etc.)
+    QSurfaceFormat.setDefaultFormat(format) # Apply settings globally
+
+
 class Triangle:
     def __init__(self, size):
         self.size = size
@@ -67,12 +79,10 @@ class Triangle:
         self._create_triangle(size)
 
     def _create_triangle(self, change:float=0):
-        
         # Scale the vertex positions by the specified size
         self.vertices[0:3] = self.vertices[0:3] * change
         self.vertices[6:9] = self.vertices[6:9] * change
         self.vertices[12:15] = self.vertices[12:15] * change
-        print(self.size)
         
         # fmt: off | on ?
         # allocate a VertexArray
@@ -87,9 +97,7 @@ class Triangle:
         # Use .nbytes for numpy arrays to get the total byte size. OpenGL can sometimes struggle on MacOS with this.
         gl.glBufferData(gl.GL_ARRAY_BUFFER, self.vertices.nbytes, self.vertices, gl.GL_STATIC_DRAW)
         #  now fix this to the attribute buffer 0
-        gl.glVertexAttribPointer(
-            0, 3, gl.GL_FLOAT, gl.GL_FALSE, self.vertices.itemsize * 6, ctypes.c_void_p(0)
-        )
+        gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, self.vertices.itemsize * 6, ctypes.c_void_p(0))
         #  enable and bind this attribute (will be inPosition in the shader)
         gl.glEnableVertexAttribArray(0)
         #  now fix this to the attribute buffer 0
@@ -97,152 +105,6 @@ class Triangle:
         #  enable and bind this attribute (will be inPosition in the shader)
         gl.glEnableVertexAttribArray(1)
         gl.glBindVertexArray(0)
-
-class OpenGLWindow(QOpenGLWindow):
-    """
-    The main window for the OpenGL application.
-
-    Inherits from QOpenGLWindow to provide a canvas for OpenGL rendering within a PySide6 GUI.
-    It handles user input (mouse, keyboard) for camera control and manages the OpenGL context.
-    """
-
-    def __init__(self, parent: object = None) -> None:
-        """
-        Initializes the main window and sets up default scene parameters.
-        """
-        super().__init__()
-        # --- Camera and Transformation Attributes ---
-        self.setTitle("First Triangle OpenGL (Core Profile)")
-
-    def initializeGL(self) -> None:
-        """
-        Called once when the OpenGL context is first created.
-        This is the place to set up global OpenGL state, load shaders, and create geometry.
-        """
-        self.makeCurrent()  # Make the OpenGL context current in this thread
-        # Set the background colour to a dark grey
-        gl.glClearColor(0.4, 0.4, 0.4, 1.0)
-        # Enable depth testing, which ensures that objects closer to the camera obscure those further away
-        #gl.glEnable(gl.GL_DEPTH_TEST)
-        # Enable multisampling for anti-aliasing, which smooths jagged edges
-        gl.glEnable(gl.GL_MULTISAMPLE)
-
-        self.triangle = Triangle(1.0)
-
-        #self._create_triangle(0.5)
-        self._load_shader_from_strings(VERTEX_SHADER, FRAGMENT_SHADER)
-
-    def _load_shader_from_strings(self, vertex, fragment):
-        # here we create a program
-        self.shader_id = gl.glCreateProgram()
-
-        # create a Vertex shader object
-        vertex_id = gl.glCreateShader(gl.GL_VERTEX_SHADER)
-        # attatch the shader source we need to convert to GL format
-
-        gl.glShaderSource(vertex_id, vertex)
-        # now compile the shader
-        gl.glCompileShader(vertex_id)
-
-        def check_shader_compilation_status(shader_id):
-            if not gl.glGetShaderiv(shader_id, gl.GL_COMPILE_STATUS):
-                print(gl.glGetShaderInfoLog(shader_id))
-                raise RuntimeError("Shader compilation failed")
-
-        check_shader_compilation_status(vertex_id)
-
-        # now create a fragment shader
-        fragment_id = gl.glCreateShader(gl.GL_FRAGMENT_SHADER)
-        # attatch the shader source
-        gl.glShaderSource(fragment_id, fragment)
-        # compile the shader
-        gl.glCompileShader(fragment_id)
-        check_shader_compilation_status(fragment_id)
-        # now attach to the program object
-        gl.glAttachShader(self.shader_id, vertex_id)
-        gl.glAttachShader(self.shader_id, fragment_id)
-
-        # link the program
-        gl.glLinkProgram(self.shader_id)
-        # and enable it for use
-        gl.glUseProgram(self.shader_id)
-        # now tidy up the shaders as we don't need them
-        gl.glDeleteShader(vertex_id)
-        gl.glDeleteShader(fragment_id)
-
-    def paintGL(self) -> None:
-        """
-        Called every time the window needs to be redrawn.
-        This is the main rendering loop where all drawing commands are issued.
-        """
-        self.makeCurrent()
-        # Set the viewport to cover the entire window
-        gl.glViewport(0, 0, self.width(), self.height())
-        # Clear the colour and depth buffers from the previous frame
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-        gl.glBindVertexArray(self.triangle.vao_id)
-        gl.glDrawArrays(gl.GL_TRIANGLES, 0, 3)
-
-    def resizeGL(self, w: int, h: int) -> None:
-        """
-        Called whenever the window is resized.
-        It's crucial to update the viewport and projection matrix here.
-
-        Args:
-            w: The new width of the window.
-            h: The new height of the window.
-        """
-        # Update the stored width and height, considering high-DPI displays
-        # self.devicePixelRatio() will give the pixel ratio of the screen the window is on
-        ratio = self.devicePixelRatio()
-        self.window_width = int(w * ratio)
-        self.window_height = int(h * ratio)
-
-    def keyPressEvent(self, event) -> None:
-        """
-        Handles keyboard press events.
-
-        Args:
-            event: The QKeyEvent object containing information about the key press.
-        """
-        key = event.key()
-        if key == Qt.Key_Escape:
-            self.close()  # Exit the application
-        elif key == Qt.Key_W:
-            gl.glPolygonMode(
-                gl.GL_FRONT_AND_BACK, gl.GL_LINE
-            )  # Switch to wireframe rendering
-        elif key == Qt.Key_S:
-            gl.glPolygonMode(
-                gl.GL_FRONT_AND_BACK, gl.GL_FILL
-            )  # Switch to solid fill rendering
-        
-        elif key == Qt.Key_A:
-            self.triangle.size += 0.1
-            #self.triangle.vertices[7:10] += 0.1
-            #self.triangle._create_triangle(self.triangle.size)
-        
-        elif key == Qt.Key_D:
-            self.triangle.size -= 0.1
-            #self.triangle.vertices[7:10] -= 0.1
-            #self.triangle._create_triangle(self.triangle.size)
-
-        # Trigger a redraw to apply changes
-        self.update()
-        # Call the base class implementation for any unhandled events
-        super().keyPressEvent(event)
-
-
-def set_QSurfaceFormat():
-    format: QSurfaceFormat = QSurfaceFormat()
-    format.setSamples(4) # Request 4x multisampling for anti-aliasing
-    format.setMajorVersion(4) # Request OpenGL version 4.1 as the highest supported version by macOS
-    format.setMinorVersion(1)
-    format.setProfile(QSurfaceFormat.CoreProfile) # Request a Core Profile context, which removes deprecated features
-    format.setDepthBufferSize(24) # Request a 24-bit depth buffer for better z-depth precision
-
-    # Set default format for all QSurface instances (QOpenGLWidget, QOpenGLWindow, etc.)
-    QSurfaceFormat.setDefaultFormat(format) # Apply settings globally
 
 class OpenGLApple(QOpenGLWidget):
     def __init__(self, parent):
@@ -298,6 +160,11 @@ class OpenGLApple(QOpenGLWidget):
         # Cleanup by deleting shaders
         gl.glDeleteShader(vertex_id)
         gl.glDeleteShader(fragment_id)
+
+    def resizeGL(self, w, h):
+        ratio = self.devicePixelRatio()
+        self.window_width = int(w * ratio)
+        self.window_height = int(h * ratio)
 
     def paintGL(self):
         """
