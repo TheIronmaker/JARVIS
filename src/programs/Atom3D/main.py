@@ -8,48 +8,24 @@ standard mouse and keyboard controls for interacting with a 3D scene (rotate, pa
 It is designed to be a starting point for more complex OpenGL applications.
 """
 
+# System imports
 import ctypes
 import sys
 import traceback
-
 import numpy as np
-import OpenGL.GL as gl
+
+# PySide6 imports
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QSurfaceFormat
 from PySide6.QtOpenGL import QOpenGLWindow
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication, QMainWindow
 
+# OpenGL imports
+import OpenGL.GL as gl
 
-VERTEX_SHADER = """#version 410 core
-layout (location = 0) in vec3 inPosition;
-layout (location = 1) in vec3 inColour;
-
-out vec3 vertColour;
-
-void main()
-{
-    gl_Position = vec4(inPosition, 1.0);
-    vertColour = inColour;
-}"""
-
-FRAGMENT_SHADER = """#version 410 core
-precision highp float;
-
-in vec3 vertColour;
-out vec4 fragColour;
-
-void main()
-{fragColour = vec4(vertColour, 1.0);}
-"""
-
-
-VERTEX_DATA = np.array([
-            -0.75, -0.75,0.0,1.0, 0.0, 0.0,  # Bottom-left vertex (red)
-            0.0,  0.75,0.0, 0.0, 1.0,  0.0,  # Top vertex (green)
-            0.75,  -0.75, 0.0, 0.0,  0.0, 1.0,  # Bottom-right vertex (blue)
-            ],dtype=np.float32)
-
+# Local imports
+from shaders import VERTEX_SHADER, FRAGMENT_SHADER
 
 def set_QSurfaceFormat():
     format: QSurfaceFormat = QSurfaceFormat()
@@ -63,6 +39,10 @@ def set_QSurfaceFormat():
     QSurfaceFormat.setDefaultFormat(format) # Apply settings globally
 
 
+class sphere:
+    def __init__(self, radius, segments):
+        self.radius = radius
+    
 class Triangle:
     def __init__(self, size):
         self.size = size
@@ -152,9 +132,19 @@ class OpenGLApple(QOpenGLWidget):
         # Attach, link, and use shaders
         gl.glAttachShader(self.shader_id, vertex_id)
         gl.glAttachShader(self.shader_id, fragment_id)
-
         gl.glLinkProgram(self.shader_id)
-        
+
+        # Retrieve uniform locations
+        modelLoc = gl.glGetUniformLocation(self.shader_id, "model")
+        viewLoc = gl.glGetUniformLocation(self.shader_id, "view")
+        projLoc = gl.glGetUniformLocation(self.shader_id, "projection")
+        colorLoc = gl.glGetUniformLocation(self.shader_id, "objectColor")
+        print(f"\nUniform locations:\n"
+              f"model = {modelLoc if modelLoc != -1 else 'Not found'}\n"
+              f"view = {viewLoc if viewLoc != -1 else 'Not found'}\n"
+              f"projection = {projLoc if projLoc != -1 else 'Not found'}\n"
+              f"objectColor = {colorLoc if colorLoc != -1 else 'Not found'}")
+
         gl.glUseProgram(self.shader_id)
         
         # Cleanup by deleting shaders
@@ -179,7 +169,7 @@ class OpenGLApple(QOpenGLWidget):
         # Set Draw modes
         gl.glPolygonMode(gl.GL_FRONT_AND_BACK, self.polygon_mode)
 
-        # Clear the colour and depth buffers from the previous frame
+        # Clear the color and depth buffers from the previous frame
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
 
         # The QWidget version of OpenGL for PySide6 does not keep all data in GPU.
