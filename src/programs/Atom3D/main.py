@@ -38,6 +38,20 @@ def set_QSurfaceFormat():
     # Set default format for all QSurface instances (QOpenGLWidget, QOpenGLWindow, etc.)
     QSurfaceFormat.setDefaultFormat(format) # Apply settings globally
 
+config = {
+    "orbital": {"n": 2, "l": 1, "m": 0, "N": 100000}
+}
+
+class Atom:
+    def __init__(self, config):
+        self.orbital = config['orbital']
+        self.n = self.orbital['n']
+        self.l = self.orbital['l']
+        self.m = self.orbital['m']
+        self.N = self.orbital['N']
+    
+    def generateParticles(self):
+        pass # Handles point cloud generation
 
 class sphere:
     def __init__(self, radius, segments):
@@ -94,6 +108,8 @@ class OpenGLApple(QOpenGLWidget):
 
         self.shader_id = None
         self.polygon_mode = gl.GL_FILL
+
+        self.atom = Atom(config)
     
     def check_shader_compilation_status(self, shader_id):
         if not gl.glGetShaderiv(shader_id, gl.GL_COMPILE_STATUS):
@@ -195,24 +211,61 @@ class OpenGLApple(QOpenGLWidget):
         Args:
             event: The QKeyEvent object containing information about the key press.
         """
+
+        atom = self.atom
+
         key = event.key()
         if key == Qt.Key_Escape:
             self.close()
 
+        # Keybinds
         elif key == Qt.Key_W:
-            self.polygon_mode = gl.GL_LINE # Wireframe mode
+            atom.n += 1
+            atom.generateParticles()
+            
         elif key == Qt.Key_S:
-            self.polygon_mode = gl.GL_FILL # Solid fill mode
-        
-        elif key == Qt.Key_A:
-            self.triangle._create_triangle(self.triangle.size + 0.1)
-            #self.triangle.vertices[7:10] += 0.1
-            #self.triangle._create_triangle(self.triangle.size)
+            atom.n -= 1
+            if atom.n < 1:
+                atom.n = 1
+            atom.generateParticles()
+
+        elif key == Qt.Key_E:
+            atom.l += 1
+            atom.generateParticles()
         
         elif key == Qt.Key_D:
-            self.triangle._create_triangle(self.triangle.size - 0.1)
-            #self.triangle.vertices[7:10] -= 0.1
-            #self.triangle._create_triangle(self.triangle.size)
+            atom.l -= 1
+            if atom.l < 0:
+                atom.l = 0
+            atom.generateParticles()
+        
+        elif key == Qt.Key_R:
+            atom.m += 1
+            atom.generateParticles()
+        
+        elif key == Qt.Key_F:
+            atom.m -= 1
+            atom.generateParticles()
+        
+        elif key == Qt.Key_T:
+            atom.N += 100000
+            atom.generateParticles()
+        
+        elif key == Qt.Key_G:
+            atom.N -= 100000
+            atom.generateParticles()
+
+        # Clamp orbital values to valid ranges
+        if atom.l > atom.n - 1:
+            atom.l = atom.n - 1
+        if atom.l < 0:
+            atom.l = 0
+        if atom.m > atom.l:
+            atom.m = atom.l
+        if atom.m < -atom.l:
+            atom.m = -atom.l
+
+        electron_r = float(atom.n) / 3
 
         # Trigger a redraw to apply changes
         self.update()
