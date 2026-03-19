@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 
 """
-A template for creating a PySide6 application with an OpenGL viewport using py-ngl.
+OpenGL Atom Visualization from Kavan in Python using PySide6
 
 This script sets up a basic window, initializes an OpenGL context, and provides
 standard mouse and keyboard controls for interacting with a 3D scene (rotate, pan, zoom).
@@ -27,10 +27,11 @@ import OpenGL.GL as gl
 import glm
 
 # Local imports
-from shaders import VERTEX_SHADER, FRAGMENT_SHADER
+from programs.Atom3D.shaders import VERTEX_SHADER, FRAGMENT_SHADER
 
+# N to equal 100000
 config = {
-    "orbital": {"n": 2, "l": 1, "m": 0, "N": 100000},
+    "orbital": {"n": 2, "l": 1, "m": 0, "N": 10000},
     "electron_r": 1.5
 }
 
@@ -52,46 +53,6 @@ class Particle:
         self.vel = glm.vec3(0.0)
         self.color = color
 
-def sphericalToCartesian(r, theta, phi):
-    return glm.vec3(
-        r * math.sin(theta) * math.cos(phi),
-        r * math.cos(theta),
-        r * math.sin(theta) * math.sin(phi)
-    )
-
-def sampleR(n, l, gen):
-    pass
-
-def sampleTheta(l, m, gen):
-    pass
-
-def samplePhi(m, gen):
-    pass
-
-def generate_particles(N):
-    global particles    
-
-    particles = []
-    n, l, m = config['orbital'][:3]
-
-    # For loop is slow in python. Consider numpy for large N
-    for i in range(N):
-        gen = random.Random(i)
-
-        pos = sphericalToCartesian(
-            sampleR(n, l, gen),
-            sampleTheta(l, m, gen),
-            samplePhi(m, gen))
-
-        r = glm.length(pos)
-        theta = math.acos(pos.y / r if r > 0 else 0)
-        phi = math.atan2(pos.z, pos.x)
-        col = glm.vec4(r, theta, phi, n, l, m)
-
-        particles.append(Particle(pos, col))
-
-
-
 
 class Atom:
     def __init__(self, config):
@@ -102,9 +63,63 @@ class Atom:
         self.N = self.orbital['N']
 
         self.electron_r = config['electron_r']
+        
+        self.particles = np.zeros((self.N, 6), dtype=np.float32)
+
+    def sphericalToCartesian(self, r:np.ndarray, theta:np.ndarray, phi:np.ndarray) -> np.ndarray:
+        print("r: " + str(r), "\ntheta: " + str(theta), "\nphi: " + str(phi))
+        return np.stack((
+            r * np.sin(theta) * np.cos(phi),
+            r * np.cos(theta),
+            r * np.sin(theta) * np.sin(phi)),
+            axis=-1).astype(np.float32)
+
+    def sampleR(self) -> np.ndarray:
+        return np.random.random(size=self.N) * self.electron_r
+    
+    def sampleTheta(self) -> np.ndarray:
+        return np.arccos(1 - 2 * np.random.random(size=self.N))
+    
+    def samplePhi(self) -> np.ndarray:
+        return 2 * math.pi * np.random.random(size=self.N)
+    
+    def heatmap_fire(self, value) -> np.ndarray:
+        result = np.zeros((value.shape[0], 4), dtype=np.float32)
+
+        return result
+
+    def inferno(self, r, theta, phi) -> glm.vec4:
+        """
+        Simple vectorized color mapping for particles.
+        Maps radial distance `r` to a color ramp from blue (close) to red (far).
+        Returns an (N,4) numpy float32 array of RGBA values in [0,1].
+        """
+
+        # Temp False return
+        intensity = np.zeros(r.shape[0], dtype=np.float32)
+        return self.heatmap_fire(intensity)
 
     def generateParticles(self):
-        pass # Handles point cloud generation
+        # Calculate all Cartesian coordinates at once using numpy arrays for better performance
+        pos = self.sphericalToCartesian(
+            self.sampleR(),
+            self.sampleTheta(),
+            self.samplePhi())
+
+        ### Build col:
+        # r = length of each vector in pos
+        # theta = arccos of y value divided by r for each vector in pos | Improved to avoid division by zero and ensure valid input for arccos
+        # phi = arctan2 of z and x values for each vector in pos
+        # Recompute spherical coords (robust) and compute colors
+
+        r = np.linalg.norm(pos, axis=1)
+        # theta = np.arccos(pos[:, 1] / r) # Original | Must be valid input for arccos
+        theta = np.arccos(np.clip(pos[:, 1] / (r + 1e-12), -1.0, 1.0))
+        phi = np.arctan2(pos[:, 2], pos[:, 0])
+        col = self.inferno(r, theta, phi) # Shape: N, 4 (glm -> np vec4)
+
+        # Store particles as list of (pos, color) tuples for downstream code
+        self.particles = list(zip(pos.astype(np.float32), col.astype(np.float32)))
 
 
 class Triangle:
@@ -182,16 +197,32 @@ class Camera:
         self.target = np.identity(3, dtype=np.float32)
 
 class OpenGLApple(QOpenGLWidget):
+    class Engine:
+        def __init__(self, parent):
+            self.parent = parent
+    
     def __init__(self, parent):
         super().__init__(parent)
         self.vertex_shader = VERTEX_SHADER
         self.fragment_shader = FRAGMENT_SHADER
 
+        # Temp definitions
+        self.sphereVAO = None
+        self.sphereVBO = None
+        self.sphereVertexCount = None
+
+        self.modelLoc = None
+        self.viewLoc = None
+        self.projLoc = None
+        self.colorLoc = None
+
+        # OpenGL states (temp)
         self.shader_id = None
         self.polygon_mode = gl.GL_FILL
 
         self.camera = Camera()
         self.atom = Atom(config)
+        self.atom.generateParticles()
     
     def create_VBOVAO(self, vertices:np.float32):
         vao = gl.glGenVertexArrays(1)
