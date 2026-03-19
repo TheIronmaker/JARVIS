@@ -13,19 +13,26 @@ import ctypes
 import sys
 import traceback
 import numpy as np
+import math
+import random
 
 # PySide6 imports
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QSurfaceFormat
-from PySide6.QtOpenGL import QOpenGLWindow
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from PySide6.QtWidgets import QApplication, QMainWindow
 
 # OpenGL imports
 import OpenGL.GL as gl
+import glm
 
 # Local imports
 from shaders import VERTEX_SHADER, FRAGMENT_SHADER
+
+config = {
+    "orbital": {"n": 2, "l": 1, "m": 0, "N": 100000},
+    "electron_r": 1.5
+}
 
 def set_QSurfaceFormat():
     format: QSurfaceFormat = QSurfaceFormat()
@@ -38,9 +45,53 @@ def set_QSurfaceFormat():
     # Set default format for all QSurface instances (QOpenGLWidget, QOpenGLWindow, etc.)
     QSurfaceFormat.setDefaultFormat(format) # Apply settings globally
 
-config = {
-    "orbital": {"n": 2, "l": 1, "m": 0, "N": 100000}
-}
+
+class Particle:
+    def __init__(self, pos:glm.vec3, color:glm.vec4):
+        self.pos = pos
+        self.vel = glm.vec3(0.0)
+        self.color = color
+
+def sphericalToCartesian(r, theta, phi):
+    return glm.vec3(
+        r * math.sin(theta) * math.cos(phi),
+        r * math.cos(theta),
+        r * math.sin(theta) * math.sin(phi)
+    )
+
+def sampleR(n, l, gen):
+    pass
+
+def sampleTheta(l, m, gen):
+    pass
+
+def samplePhi(m, gen):
+    pass
+
+def generate_particles(N):
+    global particles    
+
+    particles = []
+    n, l, m = config['orbital'][:3]
+
+    # For loop is slow in python. Consider numpy for large N
+    for i in range(N):
+        gen = random.Random(i)
+
+        pos = sphericalToCartesian(
+            sampleR(n, l, gen),
+            sampleTheta(l, m, gen),
+            samplePhi(m, gen))
+
+        r = glm.length(pos)
+        theta = math.acos(pos.y / r if r > 0 else 0)
+        phi = math.atan2(pos.z, pos.x)
+        col = glm.vec4(r, theta, phi, n, l, m)
+
+        particles.append(Particle(pos, col))
+
+
+
 
 class Atom:
     def __init__(self, config):
@@ -49,14 +100,13 @@ class Atom:
         self.l = self.orbital['l']
         self.m = self.orbital['m']
         self.N = self.orbital['N']
-    
+
+        self.electron_r = config['electron_r']
+
     def generateParticles(self):
         pass # Handles point cloud generation
 
-class sphere:
-    def __init__(self, radius, segments):
-        self.radius = radius
-    
+
 class Triangle:
     def __init__(self, size):
         self.size = size
@@ -100,6 +150,37 @@ class Triangle:
         gl.glEnableVertexAttribArray(1)
         gl.glBindVertexArray(0)
 
+class Camera:
+    def __init__(self):
+        self.target = np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        self.radius = 50.0
+        self.azimuth = 0.0
+        self.elevation = math.pi / 2.0
+        self.orbit_speed = 0.01
+        self.pan_speed = 0.01
+        self.zoom_speed = 0.1
+
+        self.dragging = False
+        self.panning = False
+
+        self.lastX = 0.0
+        self.lastY = 0.0
+    
+    def position(self):
+        try:
+            clamped_elevation = np.clip(self.elevation, 0.01, math.pi - 0.01)
+            return np.array([
+                self.radius * math.sin(clamped_elevation) * math.cos(self.azimuth),
+                self.radius * math.cos(clamped_elevation),
+                self.radius * math.sin(clamped_elevation) * math.sin(self.azimuth)],
+                dtype=np.float32)
+        except Exception as e:
+            print(f"Error in position calculation: {e}")
+            return np.array([0.0, 0.0, 0.0], dtype=np.float32)
+
+    def update(self):
+        self.target = np.identity(3, dtype=np.float32)
+
 class OpenGLApple(QOpenGLWidget):
     def __init__(self, parent):
         super().__init__(parent)
@@ -109,8 +190,21 @@ class OpenGLApple(QOpenGLWidget):
         self.shader_id = None
         self.polygon_mode = gl.GL_FILL
 
+        self.camera = Camera()
         self.atom = Atom(config)
     
+    def create_VBOVAO(self, vertices:np.float32):
+        vao = gl.glGenVertexArrays(1)
+        vbo = gl.glGenBuffers(1)
+
+        gl.glBindVertexArray(vao)
+        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
+        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
+
+        gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 12, None)
+        gl.glEnableVertexAttribArray(0)
+        gl.glBindVertexArray(0)
+
     def check_shader_compilation_status(self, shader_id):
         if not gl.glGetShaderiv(shader_id, gl.GL_COMPILE_STATUS):
             e = gl.glGetShaderInfoLog(shader_id)
@@ -151,15 +245,16 @@ class OpenGLApple(QOpenGLWidget):
         gl.glLinkProgram(self.shader_id)
 
         # Retrieve uniform locations
-        modelLoc = gl.glGetUniformLocation(self.shader_id, "model")
-        viewLoc = gl.glGetUniformLocation(self.shader_id, "view")
-        projLoc = gl.glGetUniformLocation(self.shader_id, "projection")
-        colorLoc = gl.glGetUniformLocation(self.shader_id, "objectColor")
+        self.modelLoc = gl.glGetUniformLocation(self.shader_id, "model")
+        self.viewLoc = gl.glGetUniformLocation(self.shader_id, "view")
+        self.projLoc = gl.glGetUniformLocation(self.shader_id, "projection")
+        self.colorLoc = gl.glGetUniformLocation(self.shader_id, "objectColor")
+
         print(f"\nUniform locations:\n"
-              f"model = {modelLoc if modelLoc != -1 else 'Not found'}\n"
-              f"view = {viewLoc if viewLoc != -1 else 'Not found'}\n"
-              f"projection = {projLoc if projLoc != -1 else 'Not found'}\n"
-              f"objectColor = {colorLoc if colorLoc != -1 else 'Not found'}")
+              f"model = {self.modelLoc if self.modelLoc != -1 else 'Not found'}\n"
+              f"view = {self.viewLoc if self.viewLoc != -1 else 'Not found'}\n"
+              f"projection = {self.projLoc if self.projLoc != -1 else 'Not found'}\n"
+              f"objectColor = {self.colorLoc if self.colorLoc != -1 else 'Not found'}")
 
         gl.glUseProgram(self.shader_id)
         
@@ -168,6 +263,7 @@ class OpenGLApple(QOpenGLWidget):
         gl.glDeleteShader(fragment_id)
 
     def resizeGL(self, w, h):
+        # Might be able to remove ratio calculations from paintGL with this method
         ratio = self.devicePixelRatio()
         self.window_width = int(w * ratio)
         self.window_height = int(h * ratio)
@@ -181,19 +277,31 @@ class OpenGLApple(QOpenGLWidget):
         # Match the viewport and window size to handle high-DPI displays correctly, mainly for MacOS
         ratio = self.devicePixelRatio()
         gl.glViewport(0, 0, int(self.width() * ratio), int(self.height() * ratio))
-
-        # Set Draw modes
-        gl.glPolygonMode(gl.GL_FRONT_AND_BACK, self.polygon_mode)
-
-        # Clear the color and depth buffers from the previous frame
         gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        #gl.glPolygonMode(gl.GL_FRONT_AND_BACK, self.polygon_mode)
 
-        # The QWidget version of OpenGL for PySide6 does not keep all data in GPU.
-        # Other programs may use the GPU, so we point back to the correct shader_id.
+        # QOpenGLWidget on MacOS does not maintain OpenGL data across frames, so we need to re-bind our shader program and vertex arrays every time we draw.
         if self.shader_id is not None:
             gl.glUseProgram(self.shader_id)
         else:
             raise RuntimeError("Shader program is not initialized. Cannot render without shaders.")
+        
+        # Set up transformation matrices (view, projection)
+        aspect = self.width() / self.height() if self.height() > 0 else 1.0
+        projection = glm.perspective(glm.radians(45.0), aspect, 0.1, 100.0)
+        view = glm.lookAt(self.camera.position(), self.camera.target, np.array([0, 1, 0], dtype=np.float32))
+
+        
+        gl.glUniformMatrix4fv(self.viewLoc, 1, gl.GL_FALSE, glm.value_ptr(view))
+        gl.glUniformMatrix4fv(self.projLoc, 1, gl.GL_FALSE, glm.value_ptr(projection))
+
+        #gl.glBindVertexArray(self.sphereVAO)
+
+        # Much code for particles, then: gl.glUniformMatrix4fv(self.modelLoc, 1, GL_FALSE, glm.value_ptr(model))
+
+        gl.glUniform4f(self.colorLoc, 1.0, 0.5, 0.31, 1.0)
+
+
 
         # Bind arrays and draw
         gl.glBindVertexArray(self.triangle.vao_id)
@@ -203,6 +311,27 @@ class OpenGLApple(QOpenGLWidget):
         gl.glUseProgram(0) # Unbind the shader program after drawing
 
         # Any glViewport or glClear calls should be made in paintGL to ensure they are applied every frame, especially after window resizing.
+
+    def drawSpheres(self, particles):
+        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        if self.shader_id is not None:
+            gl.glUseProgram(self.shader_id)
+        else:
+            raise RuntimeError("Shader program is not initialized. Cannot render without shaders.")
+        
+        # Set up transformation matrices (view, projection)
+        aspect = self.width() / self.height() if self.height() > 0 else 1.0
+        projection = glm.perspective(glm.radians(45.0), aspect, 0.1, 100.0)
+        view = glm.lookAt(self.camera.position(), self.camera.target, np.array([0, 1, 0], dtype=np.float32))
+
+        gl.glUniformMatrix4fv(self.viewLoc, 1, gl.GL_FALSE, glm.value_ptr(view))
+        gl.glUniformMatrix4fv(self.projLoc, 1, gl.GL_FALSE, glm.value_ptr(projection))
+
+        #gl.glBindVertexArray(self.sphereVAO)
+        # Much code for particles, then: gl.glUniformMatrix4fv(self.modelLoc, 1, GL_FALSE, glm.value_ptr(model))
+        for p in particles:
+            if p.pos.x ==1:pass
+
 
     def keyPressEvent(self, event) -> None:
         """
@@ -275,7 +404,7 @@ class OpenGLApple(QOpenGLWidget):
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("OpenGL Apple Test Suite")
+        self.setWindowTitle("Atom Prob-Flow (Andy's python)")
         self.opengl_widget = OpenGLApple(self)
         self.setCentralWidget(self.opengl_widget)
     
