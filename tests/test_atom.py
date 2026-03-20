@@ -2,7 +2,6 @@ import numpy as np
 import pytest
 
 from programs.Atom3D.shaders import VERTEX_SHADER, FRAGMENT_SHADER
-
 from programs.Atom3D.main import Atom, config
 
 
@@ -66,8 +65,37 @@ def test_inferno_extremes():
     assert colors[0, 3] == pytest.approx(1.0)
     assert colors[1, 3] == pytest.approx(1.0)
 
+def test_inferno():
+    atom = Atom({**config, 'electron_r': 2.0, 'orbital': {**config['orbital'], 'N': 2}})
 
-test_spherical_to_cartesian_known()
-test_sample_functions_reproducible()
-test_inferno_and_generate_particles_shape_and_range()
-test_inferno_extremes()
+    r = np.array([0.5, 1.5])
+    theta = np.array([0.5, 1.0])
+    phi = np.array([0.5, 1.0])
+    colors = atom.inferno(r, theta, phi)
+    assert colors.shape == (2, 4)
+    assert np.all(colors >= 0.0) and np.all(colors <= 1.0)
+    assert colors[0, 3] == pytest.approx(1.0)
+    assert colors[1, 3] == pytest.approx(1.0)
+
+
+
+atom = Atom({**config, 'electron_r': 2.0, 'orbital': {**config['orbital'], 'N': 2}})
+
+
+a0 = 1.0
+def test_inferno_array(r, theta, phi, n, l, m):
+    rho = 2 * r / (n * a0)
+    
+
+
+# Test data for inferno array test - for r, theta, phi, n, l, m
+data = np.array([
+    (1.2, 0.5, 0.5, 1, 0, 0),
+    (1.0, 1.0, 1.0, 2, 0, 0),
+    (3.0, 1.5, 1.2, 3, 0, 1)
+])
+
+#result = [atom.inferno(*data[i]) for i in range(len(data))]
+#print(*result)
+
+print("sampleTheta:", atom.samplePhi(10))

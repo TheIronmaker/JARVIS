@@ -2,6 +2,7 @@
 # Random Files/Folders
 # -------------------------
 private_tests/
+*temp.py
 
 # -------------------------
 # Python cache / artifacts
