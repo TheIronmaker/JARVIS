@@ -1,4 +1,5 @@
 import numpy as np
+import math
 import pytest
 
 from programs.Atom3D.shaders import VERTEX_SHADER, FRAGMENT_SHADER
@@ -98,4 +99,11 @@ data = np.array([
 #result = [atom.inferno(*data[i]) for i in range(len(data))]
 #print(*result)
 
-print("sampleTheta:", atom.samplePhi(10))
+#print("sampleTheta:", atom.samplePhi(10))
+n = int(input("Enter n: "))
+l = int(input("Enter l: "))
+a0 = float(input("Enter a0: "))
+
+
+norm = (2/(n*a0))**3 * math.factorial(n-l-1) / (2*n*math.factorial(n+l))
+print("norm:", norm)
