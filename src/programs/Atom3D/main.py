@@ -1,11 +1,17 @@
 #!/usr/bin/env -S uv run --script
 
 """
-OpenGL Atom Visualization from Kavan in Python using PySide6
+ATOM SIMULATOR PROGRAM - JARVIS
+-------------------------------------------------
+Description: A Python/OpenGL implementation of an interactive atom simulator.
+Original Logic & C++ Implementation: Kavan (https://github.com)
+YouTube Reference: https://www.youtube.com
 
-This script sets up a basic window, initializes an OpenGL context, and provides
-standard mouse and keyboard controls for interacting with a 3D scene (rotate, pan, zoom).
-It is designed to be a starting point for more complex OpenGL applications.
+Translated and adapted to Python by: Andy
+Role: Sub-feature for JARVIS Assistant Project
+-------------------------------------------------
+Note: This module is a port of Kavan's 'Atoms' project. 
+All scientific equations used are standard physics implementations.
 """
 
 # System imports

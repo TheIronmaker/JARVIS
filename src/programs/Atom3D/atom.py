@@ -50,7 +50,7 @@ class Atom:
         rMax = 10.0 * n**2 * a0
         dr = rMax / (N - 1)
         r = np.linspace(0, rMax, N, dtype=np.float32)
-        rho = 2*r / (n * a0)
+        rho = 2 * r / (n * a0)
 
         # Associated Laguerre L_{n-l-1}^{2l+1}(rho)
         k = n - l - 1
@@ -65,9 +65,10 @@ class Atom:
                 L = ((2 * i - 1 + alpha - rho) * Lm1 - (i - 1 + alpha) * Lm2) / i
                 Lm2, Lm1 = Lm1, L
         
-        # norm is a scalar, L and R are arrays of shape (N,), and numpy handles the operations correctly.
-        norm = (2/(n*a0))**3 * math.factorial(n-l-1) / (2*n*math.factorial(n+l))
-        R = np.sqrt(norm) * np.exp(-rho / 2) * rho**l * L
+        # norm is a scalar based on orbitals and may be calculated for multiple functions at once and saved as self.norm
+        # norm = (2/(n*a0))**3 * math.factorial(n-l-1) / (2*n*math.factorial(n+l))
+        # L and R are arrays of shape (N,), and numpy handles the operations correctly.
+        R = np.sqrt(self.norm) * np.exp(-rho / 2) * rho**l * L
 
         pdf = R**2 * r**2 * dr
         cdf = np.cumsum(pdf)
@@ -115,38 +116,68 @@ class Atom:
     def samplePhi(self) -> np.ndarray:
         return 2 * math.pi * np.random.random(size=self.N)
     
-    def heatmap_fire(self, value) -> np.ndarray:
+    def heatmap_fire(self, values) -> np.ndarray:
         result = np.zeros((4), dtype=np.float32)
  
         return result
 
     def inferno(self, r, theta, phi) -> np.ndarray:
-        """ Colorization for particles using array based calculations """
-        # r = np.linalg.norm(pos) Shape: (N,) coor: x, y, z
+        """ Colorization for particles using array based calculations
+        Args:
+          r = np.linalg.norm(pos) Shape: (N,) coor: x, y, z
+
+        """
+        
         n = self.n
         l = self.l
+        m = self.m
+        N = self.N
         a0 = self.a0
 
         # r, theta, phi are all (N,) arrays. n, l, m are scalars
-        rho = 2 * r / (n * a0) #a
-        k = n - l - 1 #c
-        alpha = 2 * l + 1 #c
+        rho = 2 * r / (n * a0)
+        k = n - l - 1
+        alpha = 2 * l + 1
 
-        L = 1 #c
+        L = np.ones(N, dtype=np.float32)
         if k == 1:
-            # L = c + c - a = a
-            L = 1 + alpha - rho
+            L += alpha - rho
         elif k > 1:
-            Lm2 = 1 #c or a
-            Lm1 = 1 + alpha - rho #c - a = a
-            print(k)
+            Lm2 = np.ones(N, dtype=np.float32)
+            Lm1 = 1 + alpha - rho
             for i in range(2, k + 1):
-                # L = ((2i - 1 + c - a) * Lm1 - (i - 1 + c) * Lm2) / i = a
-                # L = a * a
-                L = ((2*i - 1 + alpha - rho) * Lm1 - (i - 1 + alpha) * Lm2) / i
+                L = ((2 * i - 1 + alpha - rho) * Lm1 - (i - 1 + alpha) * Lm2) / i
                 Lm2, Lm1 = Lm1, L
-        # Cases of orbital where L would not be one: 
-        return r
+        
+        # norm is a scalar base on orbitals and may be calculated for multiple functions at once and saved as self.norm
+        # norm = (2/(n*a0))**3 * math.factorial(n-l-1) / (2*n*math.factorial(n+l))
+        R = math.sqrt(self.norm) * np.exp(-rho/2) * rho**l * L
+        radial = R**2
+
+        x = np.cos(theta)
+
+        Pmm = np.ones(N, dtype=np.float32)        
+        if m > 0:
+            somx2 = np.sqrt((1 - x) * (1 + x))
+            for fact in range(1, 2*m, 2):
+                Pmm *= -fact * somx2
+        
+        Plm = Pmm
+        if l != m:
+            Pm1m = x * (2 * m + 1) * Pmm
+            if l == m + 1:
+                Plm = Pm1m
+            else:
+                for ll in range(m + 2, l + 1):
+                    Pll = ((2 * ll - 1) * x * Pm1m - (ll + m - 1) * Pmm) / (ll - m)
+                    Pmm, Pm1m = Pm1m, Pll
+                Plm = Pm1m
+        
+        angular = Plm**2
+        intensity = radial * angular
+
+        # May add config values for scaling
+        return self.heatmap_fire(intensity * 1.5 * n**5)
 
     def inferno_single(self, r, theta, phi, n, l, m) -> np.ndarray:
         """
@@ -202,11 +233,14 @@ class Atom:
         intensity = radial * angular
         return self.heatmap_fire(intensity * 1.5 * self.n**5)
 
-    def generateParticles(self, n=None, l=None, m=None, N=None):
+    def generateParticles(self, n=None, l=None, m=None, N=None, a0=None):
         if n is not None: self.n = n
         if l is not None: self.l = l
         if m is not None: self.m = m
         if N is not None: self.N = N
+        if a0 is not None: self.a0 = a0
+
+        self.norm = (2/(n*a0))**3 * math.factorial(n-l-1) / (2*n*math.factorial(n+l))
         
         # Calculate all Cartesian coordinates at once using numpy arrays for better performance
         pos = self.sphericalToCartesian(
