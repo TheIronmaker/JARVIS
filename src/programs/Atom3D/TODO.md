@@ -1,16 +1,17 @@
 # Complete Snippets
-`def` sphericalToCartesian
+`def` sphericalToCartesian  
+`def` sampleR  
+`def` sampleTheta  
+`def` samplePhi  
 
 # Missing functions and sections of Code
 calculateProbabilityFlow
 
 ## Particle Generation
 def generate_particles:
-- sampleR
-- sampleTheta
-- [x] samplePhi
 - inferno (for all at once)
-  - heatmap_fire (for all at once)
+- heatmap_fire (for all at once)
+- generateParticles
 
 `class` Camera:
 - processMouseMove

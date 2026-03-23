@@ -78,44 +78,57 @@ class Atom:
         idx = np.searchsorted(cdf, u).astype(np.float32)
         return idx * dr
 
-    def sampleTheta(self, l, m, N) -> np.ndarray:
+    def sampleTheta(self) -> np.ndarray:
         l = self.l
         m = self.m
-        a0 = self.a0
 
         N = 2048
-        built = False
+        dtheta = np.pi / (N - 1)
+        theta = np.linspace(0, np.pi, N, dtype=np.float32) * dtheta
+        x = np.cos(theta)
+        
+        Pmm = np.ones(N, dtype=np.float32)
+        if m > 0:
+            somx2 = np.sqrt((1-x)*(1+x))
+            fact = 1
+            for _ in range(1, m + 1):
+                Pmm *= -fact * somx2
+                fact += 2
 
-        while not built:
-            norm.resize((N,)) # In question
-            dtheta = math.pi / (N - 1)
-            sum = np.zeros((N,), dtype=np.float32)
+        Plm = Pmm
+        if l != m:
+            Pm1m = x * (2 * m + 1) * Pmm
+            if l != m + 1:
+                for ll in range(m + 2, l + 1):
+                    Pll = ((2 * ll - 1) * x * Pm1m - (ll + m - 1) * Pmm) / (ll - m)
+                    Pmm, Pm1m = Pm1m, Pll
+            Plm = Pm1m
 
-            for i in range(0, N):
-                theta = i * dtheta
-                x = math.cos(theta)
+        pdf = np.sin(theta) * Plm**2
+        cdf = np.cumsum(pdf)
+        cdf /= cdf[-1]
 
-                Pmm = 1
-                if m > 0:
-                    pass
+        u = np.random.random(size=self.N)
+        idx = np.searchsorted(cdf, u).astype(np.float32)
+        return idx * dtheta
     
-    def samplePhi(self, N) -> np.ndarray:
-        return 2 * math.pi * np.random.random(size=N)
+    def samplePhi(self) -> np.ndarray:
+        return 2 * math.pi * np.random.random(size=self.N)
     
     def heatmap_fire(self, value) -> np.ndarray:
         result = np.zeros((4), dtype=np.float32)
-
+ 
         return result
 
-    def inferno(self, r, theta, phi, n:int, l:int, m:int) -> np.ndarray:
+    def inferno(self, r, theta, phi) -> np.ndarray:
         """ Colorization for particles using array based calculations """
-        # Temp:
-        n = int(n)
-        l = int(l)
-        m = int(m)
+        # r = np.linalg.norm(pos) Shape: (N,) coor: x, y, z
+        n = self.n
+        l = self.l
+        a0 = self.a0
 
         # r, theta, phi are all (N,) arrays. n, l, m are scalars
-        rho = 2 * r / (n * self.a0) #a
+        rho = 2 * r / (n * a0) #a
         k = n - l - 1 #c
         alpha = 2 * l + 1 #c
 
@@ -197,9 +210,9 @@ class Atom:
         
         # Calculate all Cartesian coordinates at once using numpy arrays for better performance
         pos = self.sphericalToCartesian(
-            self.sampleR(n, l, N),
-            self.sampleTheta(l, m, N),
-            self.samplePhi(N))
+            self.sampleR(),
+            self.sampleTheta(),
+            self.samplePhi())
 
         ### Build col:
         # r = length of each vector in pos
@@ -214,14 +227,14 @@ class Atom:
         # theta = np.arccos(pos[:, 1] / r) # Original | Must be valid input for arccos
         theta = np.arccos(np.clip(pos[1] / (r + 1e-12), -1.0, 1.0))
         phi = np.arctan2(pos[2], pos[0])
-        col = self.inferno_single(r, theta, phi, n, l, m) # Shape: N, 4 (glm vec4 -> np vec4)
+        col = self.inferno(r, theta, phi) # Shape: N, 4 (glm vec4 -> np vec4)
 
         # Store particles as list of (pos, color) tuples for downstream code
         self.particles = list(zip(pos.astype(np.float32), col.astype(np.float32)))
 
 
 config = {
-    "orbital": {"n": 2, "l": 0, "m": 0},
+    "orbital": {"n": 4, "l": 2, "m": 1},
     "N": 10000,
     "electron_r": 1.5
 }
@@ -232,9 +245,9 @@ atom = Atom(config)
 array = np.random.random((config["N"], 6)) * np.array([2.0, math.pi, 2*math.pi, 1.0, 1.0, 1.0])
 
 st = time.time()
-R = atom.sampleR()
+R = atom.sampleTheta()
 et = time.time() - st
-print("Milliseconds taken for sampleR:", et * 1000)
+print("Milliseconds taken for sampleTheta:", et * 1000)
 
 import matplotlib.pyplot as plt
 plt.plot(R)

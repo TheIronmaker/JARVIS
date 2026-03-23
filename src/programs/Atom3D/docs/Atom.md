@@ -51,3 +51,21 @@ The final step is to normalize the data and set the largest value to `1`. Since 
 ### Final calculations
 A fresh array of random [0, 1] values is made for the total number of particles. This array is completely random, and not set to any pattern. By using C++ `lower_bound` or python `np.searchsorted`, the random `u` values are set to a pattern calculated with the `cdf` values. In essence, the random values are rounded to a custom mask, called the `cdf`.  
 Finally, this new `u` value is multiplied by the `dr` scalar, and returned as the final sampleR array.
+
+# Sample Theta
+## Incomplete documentation
+### Single Values
+- `N` = 2048
+- `dtheta` $=\frac{\pi}{N-1}
+
+### Array Values
+- `theta` $\theta$: (array of random numpy range [0, 1], length N) x `dtheta`
+- `x` $=\cos(\theta)$
+- `Pmm`: numpy ones array of length N
+- `Pll` $=\frac{(2\text{ll}-1)\cdot x\cdot P_{m1m}-(\text{ll}+m-1)\cdot P_{mm}}{\text{ll}-m}$
+- `pdf` = $\sin(\theta)\cdot P_{lm}^2$
+
+# Sample Phi
+An array of random values is generated and the function returns $2\cdot\pi\cdot\text{array}$
+
+# `def` inferno($r, \theta, \phi$)
