@@ -117,17 +117,31 @@ class Atom:
         return 2 * math.pi * np.random.random(size=self.N)
     
     def heatmap_fire(self, values) -> np.ndarray:
+        num_stops = 6
+
+        id = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+        colors = np.array([
+                [0.0, 0.0, 0.0, 0.0, 1],  # 0.0 Black
+                [0.2, 0.5, 0.0, 0.99, 1], # 0.2 Dark Purple
+                [0.4, 0.8, 0.0, 0.0, 1],  # 0.4 Deep Red
+                [0.6, 1.0, 0.5, 0.0, 1],  # 0.6 Orange
+                [0.8, 1.0, 1.0, 0.0, 1],  # 0.8 Yellow
+                [1.0, 1.0, 1.0, 1.0, 1]]) # 1.0 White
+
+        scaled_v = values * (num_stops - 1)
+        i = None
+
+        # Verify that values are mathematically expected to be in the range [0, 1]. Else, clip for safety. #@revisit
+        values = np.clip(values, 0.0, 1.0)
+
+
+        r_col = np.interp(values, colors[:, :1], colors[:, 1])
+
         result = np.zeros((4), dtype=np.float32)
- 
         return result
 
     def inferno(self, r, theta, phi) -> np.ndarray:
-        """ Colorization for particles using array based calculations
-        Args:
-          r = np.linalg.norm(pos) Shape: (N,) coor: x, y, z
-
-        """
-        
+        """ Colorization for particles using array based calculations """
         n = self.n
         l = self.l
         m = self.m
@@ -177,61 +191,7 @@ class Atom:
         intensity = radial * angular
 
         # May add config values for scaling
-        return self.heatmap_fire(intensity * 1.5 * n**5)
-
-    def inferno_single(self, r, theta, phi, n, l, m) -> np.ndarray:
-        """
-        Simple vectorized color mapping for particles.
-        Maps radial distance `r` to a color ramp from blue (close) to red (far).    
-        Returns an (N,4) numpy float32 array of RGBA values in [0,1].
-        """
-
-        rho = 2 * r / (self.n * self.a0)
-        k = self.n - self.l - 1
-        alpha = 2 * self.l + 1
-
-        L = 1
-        if k == 1:
-            L = 1 + alpha - rho
-        elif k > 1:
-            Lm2 = 1
-            Lm1 = 1 + alpha - rho
-            for i in range(2, k + 1):
-                L = ((2 * i - 1 + alpha - rho) * Lm1 - (i - 1 + alpha) * Lm2) / i
-                Lm2, Lm1 = Lm1, L
-        
-        # N_nl = sqrt( (2/na_0)**3 * (n - l - 1)! / (2n * (n + l)!) )
-        norm = np.sqrt((2 / (self.n * self.a0))**3 * factorial(self.n - self.l - 1) / (2 * self.n * factorial(self.n + self.l)))
-        R = norm * np.exp(-rho / 2) * rho**self.l * L
-        radial = R**2
-
-        x = math.cos(theta)
-
-        Pmm = 1
-        if self.m > 0:
-            somx = math.sqrt((1.0 - x) * (1.0 + x))
-            fact = 1.0
-            for i in range(1, self.m + 1):
-                Pmm *= -fact * somx
-                fact += 2.0
-        
-        Plm = None
-        if self.l == self.m:
-            Plm = Pmm
-        else:
-            Pmm1 = x * (2 * self.m + 1) * Pmm
-            if self.l == self.m + 1:
-                Plm = Pmm1
-            else:
-                for i in range(self.m + 2, self.l + 1):
-                    Plm = ((2 * i - 1) * x * Pmm1 - (i + self.m - 1) * Pmm) / (i - self.m)
-                    Pmm, Pmm1 = Pmm1, Plm
-
-        angular = Plm**2
-
-        #intensity = np.zeros(r.shape[0], dtype=np.float32)
-        intensity = radial * angular
-        return self.heatmap_fire(intensity * 1.5 * self.n**5)
+        return self.heatmap_fire(intensity * 1.5 * 5**n)
 
     def generateParticles(self, n=None, l=None, m=None, N=None, a0=None):
         if n is not None: self.n = n
@@ -256,8 +216,9 @@ class Atom:
 
         # Need array of linalg for each group of three values in pos, which is (N, 3)
         print("pos shape:", pos.shape)
-        r = np.linalg.norm(pos)
+        r = np.linalg.norm(pos, axis=1)
         print("latest r:", r)
+
         # theta = np.arccos(pos[:, 1] / r) # Original | Must be valid input for arccos
         theta = np.arccos(np.clip(pos[1] / (r + 1e-12), -1.0, 1.0))
         phi = np.arctan2(pos[2], pos[0])

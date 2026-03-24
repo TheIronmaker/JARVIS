@@ -57,7 +57,7 @@ Finally, this new `u` value is multiplied by the `dr` scalar, and returned as th
 ## Incomplete documentation
 ### Single Values
 - `N` = 2048
-- `dtheta` $=\frac{\pi}{N-1}
+- `dtheta` $=\frac{\pi}{N-1}$
 
 ### Array Values
 - `theta` $\theta$: (array of random numpy range [0, 1], length N) x `dtheta`
@@ -112,3 +112,4 @@ Case 3 $k>1$, $L=(2i-1+\alpha-\rho)\cdot L_{m1}-(i-1+\alpha)\cdot L_{m2}\cdot i^
 
 ### Plm Calculation
 `Pmm` begins as an array of value 1, size $[N]$
+... more to follow. #@revisit

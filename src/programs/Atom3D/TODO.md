@@ -3,13 +3,13 @@
 `def` sampleR  
 `def` sampleTheta  
 `def` samplePhi  
+`def` inferno
 
 # Missing functions and sections of Code
 calculateProbabilityFlow
 
 ## Particle Generation
 def generate_particles:
-- inferno (for all at once)
 - heatmap_fire (for all at once)
 - generateParticles
 
