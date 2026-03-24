@@ -1,3 +1,10 @@
+"""
+File for random tests of the Atom class.
+I had VSCode AI agent create the test functions in this file.
+All other code in the project is written by and understood by me.
+"""
+
+
 import numpy as np
 import math
 import pytest
