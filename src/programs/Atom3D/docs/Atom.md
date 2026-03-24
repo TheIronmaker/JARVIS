@@ -1,15 +1,12 @@
-# `def` Sample R
-### Input variables
-- `n` - from `self.n`
-- `l` - from `self.l`
-- `a0` - from `self.a0`
+# Incomplete documentation
 
+## `def` Sample R
 ### Single Values:
 - `N` = 4096
 - `rMax` = $10\cdot n^2\cdot\text{a0}$
 - `dr` = $\frac{\text{rMax}}{N-1}$
 - `k` = $n-l-1$
-- `alpha` = $2l+1$
+- `alpha` $\alpha=2l+1$
 - `norm`: Take $(\frac{2}{n\cdot\text{a0}})^3\cdot\frac{\Gamma(n-l)}{2n\cdot\Gamma(n+l+1)} \text{ and identity } \Gamma(a) = (a-1)! \rightarrow(\frac{2}{n\cdot\text{a0}})^3\cdot\frac{(n-l-1)!}{2n\cdot(n+l)!}$
 
 ### Arrays - must be numpy arrays of `dtype = np.float32`
@@ -53,8 +50,7 @@ The final step is to normalize the data and set the largest value to `1`. Since 
 A fresh array of random [0, 1] values is made for the total number of particles. This array is completely random, and not set to any pattern. By using C++ `lower_bound` or python `np.searchsorted`, the random `u` values are set to a pattern calculated with the `cdf` values. In essence, the random values are rounded to a custom mask, called the `cdf`.  
 Finally, this new `u` value is multiplied by the `dr` scalar, and returned as the final sampleR array.
 
-# `def` Sample Theta
-## Incomplete documentation
+## `def` Sample Theta $\theta$
 ### Single Values
 - `N` = 2048
 - `dtheta` $=\frac{\pi}{N-1}$
@@ -66,15 +62,13 @@ Finally, this new `u` value is multiplied by the `dr` scalar, and returned as th
 - `Pll` $=(2\text{ll}-1)\cdot xP_{m1m}-(\text{ll}+m-1)\cdot P_{mm}\cdot(\text{ll}-m)^{-1}$
 - `pdf` = $\sin(\theta)\cdot P_{lm}^2$
 
-# `def` Sample Phi
+## `def` Sample Phi $\phi$
 An array of random values is generated and the function returns $2\cdot\pi\cdot\text{array}$
 
-# `def` inferno($r, \theta, \phi$)
-### Input variables
-- `n` - from `self.n`
-- `l` - from `self.l`
-- `a0` - from `self.a0`
+## `def` heatmap_fire (values)
+Generates heatmap for particles based on their `radial` and `angular` values.
 
+## `def` inferno ($r, \theta, \phi$)
 ### Single Values:
 - `k` $=n-l-1$
 - `alpha` $\alpha=2l+1$
@@ -113,3 +107,11 @@ Case 3 $k>1$, $L=(2i-1+\alpha-\rho)\cdot L_{m1}-(i-1+\alpha)\cdot L_{m2}\cdot i^
 ### Plm Calculation
 `Pmm` begins as an array of value 1, size $[N]$
 ... more to follow. #@revisit
+
+## `def` generateParticles
+- `self.norm` defines `norm` calculation for sampling functions to pull from. (calculate once instead of many)
+- `pos` is the x, y, z converted returns of the `sampleR`, `sampleTheta`, and `samplePhi` functions.
+- `r` = length of cartesian coordinates vector
+- `theta` $\theta=\arccos(\text{pos}_/r), pos_x=[-1, 1], r\not=0$
+- `phi` $\phi=\arctan 2(pos_z, pos_x)$
+- `col`: refer to [inferno](#def-inferno-)

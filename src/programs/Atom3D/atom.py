@@ -38,6 +38,7 @@ class Atom:
             r * np.cos(theta),
             r * np.sin(theta) * np.sin(phi)),
             axis=-1).astype(np.float32)
+            # The axis flip give shape [N, 3] instead of [3, N]
 
     def sampleR(self) -> np.ndarray:
         # Does not take arrays of n, l, or a0 since math.factorial does not support that.
@@ -116,10 +117,13 @@ class Atom:
     def samplePhi(self) -> np.ndarray:
         return 2 * math.pi * np.random.random(size=self.N)
     
-    def heatmap_fire(self, values) -> np.ndarray:
-        num_stops = 6
+    def calculateProbabilityFlow(self):
+        r = np.linalg.norm(self.pos, axis=1, keepdims=True)
+        mask = (r > 1e-6).flatten()
 
-        id = np.array([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+    def heatmap_fire(self, values) -> np.ndarray:
+        values = np.clip(values, 0.0, 1.0)
+
         colors = np.array([
                 [0.0, 0.0, 0.0, 0.0, 1],  # 0.0 Black
                 [0.2, 0.5, 0.0, 0.99, 1], # 0.2 Dark Purple
@@ -127,18 +131,12 @@ class Atom:
                 [0.6, 1.0, 0.5, 0.0, 1],  # 0.6 Orange
                 [0.8, 1.0, 1.0, 0.0, 1],  # 0.8 Yellow
                 [1.0, 1.0, 1.0, 1.0, 1]]) # 1.0 White
-
-        scaled_v = values * (num_stops - 1)
-        i = None
-
-        # Verify that values are mathematically expected to be in the range [0, 1]. Else, clip for safety. #@revisit
-        values = np.clip(values, 0.0, 1.0)
-
-
-        r_col = np.interp(values, colors[:, :1], colors[:, 1])
-
-        result = np.zeros((4), dtype=np.float32)
-        return result
+        
+        return np.column_stack([np.interp(
+            values,
+            colors[:, 0],
+            colors[:, i]
+            ) for i in range(1, 5)])
 
     def inferno(self, r, theta, phi) -> np.ndarray:
         """ Colorization for particles using array based calculations """
@@ -193,12 +191,10 @@ class Atom:
         # May add config values for scaling
         return self.heatmap_fire(intensity * 1.5 * 5**n)
 
-    def generateParticles(self, n=None, l=None, m=None, N=None, a0=None):
-        if n is not None: self.n = n
-        if l is not None: self.l = l
-        if m is not None: self.m = m
-        if N is not None: self.N = N
-        if a0 is not None: self.a0 = a0
+    def generateParticles(self):
+        n = self.n
+        l = self.l
+        a0 = self.a0
 
         self.norm = (2/(n*a0))**3 * math.factorial(n-l-1) / (2*n*math.factorial(n+l))
         
@@ -208,24 +204,14 @@ class Atom:
             self.sampleTheta(),
             self.samplePhi())
 
-        ### Build col:
-        # r = length of each vector in pos
-        # theta = arccos of y value divided by r for each vector in pos | Improved to avoid division by zero and ensure valid input for arccos
-        # phi = arctan2 of z and x values for each vector in pos
-        # Recompute spherical coords (robust) and compute colors
-
-        # Need array of linalg for each group of three values in pos, which is (N, 3)
-        print("pos shape:", pos.shape)
+        #@[docs]@revisit
+        # pos is of shape (N, 3) where pos[:, 0] is all x positions, pos[:, 1] is all y positions, and pos[:, 2] is all z positions.
         r = np.linalg.norm(pos, axis=1)
-        print("latest r:", r)
-
-        # theta = np.arccos(pos[:, 1] / r) # Original | Must be valid input for arccos
-        theta = np.arccos(np.clip(pos[1] / (r + 1e-12), -1.0, 1.0))
-        phi = np.arctan2(pos[2], pos[0])
-        col = self.inferno(r, theta, phi) # Shape: N, 4 (glm vec4 -> np vec4)
-
-        # Store particles as list of (pos, color) tuples for downstream code
-        self.particles = list(zip(pos.astype(np.float32), col.astype(np.float32)))
+        theta = np.arccos(np.clip(pos[:, 1] / r, -1.0, 1.0)) # avoids division by zero and ensures valid input for arccos
+        phi = np.arctan2(pos[:, 2], pos[:, 0])
+        self.col = self.inferno(r, theta, phi)
+        self.pos = pos
+        self.particles = np.column_stack((pos, self.col))
 
 
 config = {
@@ -235,7 +221,8 @@ config = {
 }
 
 atom = Atom(config)
-#atom.generateParticles()
+atom.generateParticles()
+print(atom.particles[:5])  # Print first 5 particles to verify structure)
 
 array = np.random.random((config["N"], 6)) * np.array([2.0, math.pi, 2*math.pi, 1.0, 1.0, 1.0])
 

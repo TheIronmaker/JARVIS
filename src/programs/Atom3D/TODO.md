@@ -3,15 +3,12 @@
 `def` sampleR  
 `def` sampleTheta  
 `def` samplePhi  
-`def` inferno
+`def` inferno  
+`def` heatmap_fire
+`def` generateParticles
 
 # Missing functions and sections of Code
 calculateProbabilityFlow
-
-## Particle Generation
-def generate_particles:
-- heatmap_fire (for all at once)
-- generateParticles
 
 `class` Camera:
 - processMouseMove
