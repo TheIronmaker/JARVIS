@@ -2,11 +2,8 @@
 
 # System imports
 import numpy as np
-from scipy.special import factorial
-from scipy.stats import norm
+import matplotlib.pyplot as plt
 import math
-import random
-
 import time
 
 # Specific imports
@@ -47,18 +44,17 @@ class Atom:
         l = self.l
         a0 = self.a0
 
+        # Setup Variables
         N = 4096
         rMax = 10.0 * n**2 * a0
-        dr = rMax / (N - 1)
         r = np.linspace(0, rMax, N, dtype=np.float32)
-        rho = 2 * r / (n * a0)
+        rho = 2.0 * r / (n * a0)
 
         # Associated Laguerre L_{n-l-1}^{2l+1}(rho)
         k = n - l - 1
         alpha = 2 * l + 1
-
         L = np.ones(N, dtype=np.float32)
-        Lm1 = 1 + alpha - rho
+        Lm1 = 1.0 + alpha - rho
         if k == 1: L = Lm1
         elif k > 1:
             Lm2 = np.ones(N, dtype=np.float32)
@@ -69,16 +65,18 @@ class Atom:
         # norm is a scalar based on orbitals and may be calculated for multiple functions at once and saved as self.norm
         # norm = (2/(n*a0))**3 * math.factorial(n-l-1) / (2*n*math.factorial(n+l))
         # L and R are arrays of shape (N,), and numpy handles the operations correctly.
-        R = np.sqrt(self.norm) * np.exp(-rho / 2) * rho**l * L
+        R = np.sqrt(self.norm) * np.exp(-rho / 2.0) * rho**l * L
 
-        pdf = R**2 * r**2 * dr
+        pdf = R**2 * r**2
         cdf = np.cumsum(pdf)
         cdf /= cdf[-1]
 
         # u = random number in [0, 1] for each particle, shape (N,)
-        u = np.random.random(size=self.N)
-        idx = np.searchsorted(cdf, u).astype(np.float32)
-        return idx * dr
+        rng = np.random.default_rng()
+        u = rng.random(size=self.N, dtype=np.float32)
+        idx = np.searchsorted(cdf, u)
+        return idx * (rMax / (N - 1))
+        # Option: return np.interp(rng.random(N), cdf, r)
 
     def sampleTheta(self) -> np.ndarray:
         l = self.l
@@ -86,7 +84,7 @@ class Atom:
 
         N = 2048
         dtheta = np.pi / (N - 1)
-        theta = np.linspace(0, np.pi, N, dtype=np.float32) * dtheta
+        theta = np.linspace(0, np.pi, N, dtype=np.float32)
         x = np.cos(theta)
         
         Pmm = np.ones(N, dtype=np.float32)
@@ -97,8 +95,9 @@ class Atom:
                 Pmm *= -fact * somx2
                 fact += 2
 
-        Plm = Pmm
-        if l != m:
+        if l == m:
+            Plm = Pmm
+        else:
             Pm1m = x * (2 * m + 1) * Pmm
             if l != m + 1:
                 for ll in range(m + 2, l + 1):
@@ -110,12 +109,14 @@ class Atom:
         cdf = np.cumsum(pdf)
         cdf /= cdf[-1]
 
-        u = np.random.random(size=self.N)
-        idx = np.searchsorted(cdf, u).astype(np.float32)
+        rng = np.random.default_rng()
+        u = rng.random(size=self.N, dtype=np.float32)
+        idx = np.searchsorted(cdf, u)
         return idx * dtheta
+        # Option B (smoother interpolation for 3D): return np.interp(rng.random(self.N), cdf, theta)
     
     def samplePhi(self) -> np.ndarray:
-        return 2 * math.pi * np.random.random(size=self.N)
+        return 2 * math.pi * np.random.random(size=self.N, dtype=np.float32)
     
     def calculateProbabilityFlow(self):
         r = np.linalg.norm(self.pos, axis=1, keepdims=True)
@@ -211,33 +212,21 @@ class Atom:
         phi = np.arctan2(pos[:, 2], pos[:, 0])
         self.col = self.inferno(r, theta, phi)
         self.pos = pos
-        self.particles = np.column_stack((pos, self.col))
+        self.particles = np.column_stack((pos, self.col)).astype(np.float32)
 
 
 config = {
-    "orbital": {"n": 4, "l": 2, "m": 1},
+    "orbital": {"n": 5, "l": 2, "m": 1},
     "N": 10000,
     "electron_r": 1.5
 }
 
 atom = Atom(config)
 atom.generateParticles()
-print(atom.particles[:5])  # Print first 5 particles to verify structure)
 
-array = np.random.random((config["N"], 6)) * np.array([2.0, math.pi, 2*math.pi, 1.0, 1.0, 1.0])
-
-st = time.time()
-R = atom.sampleTheta()
-et = time.time() - st
-print("Milliseconds taken for sampleTheta:", et * 1000)
-
-import matplotlib.pyplot as plt
-plt.plot(R)
-
-# Add a title and labels (optional but recommended)
-plt.title("1D NumPy Array Visualization (Line Plot)")
-plt.xlabel("Index")
-plt.ylabel("Value")
-
-# Display the plot
+x, y, z = atom.pos[:, 0], atom.pos[:, 1], atom.pos[:, 2]
+fig = plt.figure()
+ax = fig.add_subplot(111, projection='3d')
+ax.scatter(x, y, z)
+ax.set_xlabel('X'); ax.set_ylabel('Y'); ax.set_zlabel('Z')
 plt.show()
