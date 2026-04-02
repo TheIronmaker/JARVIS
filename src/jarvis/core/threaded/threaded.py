@@ -3,7 +3,7 @@ from time import sleep
 
 from jarvis.core.logger import Logger
 
-class ThreadedResource: #@revisit - rename variables with _
+class ThreadedResource:
     def __init__(self, cycle_time=None, name=None, daemon=False):
         self.cycle_time = cycle_time or 0.008
         self.stop_event = threading.Event()
