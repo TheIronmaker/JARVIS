@@ -1,22 +1,21 @@
 import sys
-from pathlib import Path
 
 from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, QLabel, QDockWidget, QSizePolicy
 from PySide6.QtGui import QPainter
 from PySide6.QtCore import Qt, QTimer
 
-from jarvis.core.logger import Logger
-from jarvis.app_core.views import ViewManager
+from jarvis.app_core.view_manager import ViewManager
 from jarvis.utils.services.json_processor import load_json
+from jarvis.utils.services.path_resolver import PathResolver
 
-BUILDS_PATH = Path(__file__).parent / "app_builds"
+BUILDS_DATA = PathResolver.load_file("app_main", ".json", "project", "configs/apps")
 
 class MainWindow(QMainWindow):
     def __init__(self, bus):
         super().__init__()
         self.bus = bus
 
-        self.build = load_json("app_build", BUILDS_PATH)
+        self.build = BUILDS_DATA
         self.view_managers = {}
         self.docks = {}
 
@@ -24,13 +23,11 @@ class MainWindow(QMainWindow):
         self._build_central()
     
     def load_view_managers(self):
-        for manager in self.build.get("view_managers", []):
-            if manager.get("enabled", True):
-                name = manager.get("name")
-                if not name:
-                    Logger.error("View manager build missing name. Skipping.")
-                    continue
-                self.view_managers[name] = ViewManager(self, self.bus, name)
+        for config in self.build.get("view_managers", []):
+            if not config.get("enabled", True):
+                continue
+            name = config.get("name")
+            self.view_managers[name] = ViewManager(self, self.bus, config)
 
     def _build_central(self):
         self.setWindowTitle("JARVIS")

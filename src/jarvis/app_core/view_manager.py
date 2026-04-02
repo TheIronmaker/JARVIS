@@ -6,23 +6,23 @@ from PySide6.QtGui import QPainter
 from PySide6.QtCore import QTimer
 
 from jarvis.core.logger import Logger
-from jarvis.managers.node_manager import Manager
+from jarvis.managers.node_manager import NodeManager
 import jarvis.app_core.views as app_views
+from jarvis.utils.services.path_resolver import PathResolver
 
-VIEW_MANAGER_DIR = Path(__file__).parent / "builds"
-VIEWS_DIR = Path(__file__).parent.parent
+VIEWS_DIR = Path(__file__).parent / "views"
 
-class ViewManager(Manager):
-    def __init__(self, parent, bus, name):
+class ViewManager(NodeManager):
+    def __init__(self, parent, bus, config):
         self.parent = parent
         self.bus = bus
-        self.name = name
+        self.config = config
         self.classes = app_views.__all__
         
-        # Create Manager Attributes
+        # Create Manager Attributes - restrict this from running if GUI does not show it (dynammic loading of views as needed)
         super().__init__()
         self.initialize(self.classes, package=[parent])
-        self.load_build(main_dir=(self.name, VIEW_MANAGER_DIR))
+        self.build = PathResolver.load_file("view_main", ".json", "project", "configs/managers/views")
         self.load_structs(default_dir=("settings", VIEWS_DIR))
 
         # Setup Views

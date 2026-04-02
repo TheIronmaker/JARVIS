@@ -1,1 +1,1 @@
-from .node_manager import Manager
+from .node_manager import NodeManager

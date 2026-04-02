@@ -1,9 +1,0 @@
-{
-    "cycle_time": 0.01,
-    "module_managers": [
-        {
-            "name": "atom_sim",
-            "enabled": true
-        }
-    ]
-}

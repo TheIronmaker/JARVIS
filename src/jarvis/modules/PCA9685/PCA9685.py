@@ -20,11 +20,11 @@ class PCA9685Node(ThreadedResource):
             print(f"Error initializing PCA9685Node: {e}")
             raise e
         
-    def loop(self):
+    def _loop(self):
         while self.running:
             #angle = input("Enter servo angle (0-180): ")
             #self.set_servo_angle(0, int(angle))
-            self.cycle_sleep()
+            self._cycle_sleep()
     
     def set_servo_angle(self, channel, angle):
         if angle < 0 or angle > 180:

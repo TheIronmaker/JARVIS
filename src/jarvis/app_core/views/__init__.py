@@ -1,5 +1,3 @@
-from .view_manager import ViewManager
-
 from .atom_sim import AtomSimView
 from .camera import CameraView
 from .face_tracker.view import FaceTrackerView

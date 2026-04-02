@@ -16,13 +16,13 @@ class CameraNode(ThreadedResource):
         try: self.cap = cv2.VideoCapture(0)
         except: Logger.error("Could not open camera")
     
-    def loop(self):
+    def _loop(self):
         while self.running:
             self.capture_image()
             self.bus.publish("frame", self.img)
-            self.cycle_sleep()
+            self._cycle_sleep()
     
-    def close(self):
+    def _close(self):
         self.bus.publish("frame", None)
         if self.cap:
             self.cap.release()
@@ -55,4 +55,4 @@ class CameraNode(ThreadedResource):
     def on_key_press(self, key):
         if key == "ESC":
             if cv2.waitKey(1) & 0xFF == 27:
-                self.stop_thread()
+                self._stop_thread()

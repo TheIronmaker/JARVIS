@@ -1,0 +1,6 @@
+{
+    "manifest_version": 1,
+    "name": "Atom3D",
+    "version": "0.1.0",
+    "description": "A 3D atom simulator built with PySide6 and OpenGL based of translated C++ code from Kavan"
+}

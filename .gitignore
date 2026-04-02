@@ -30,7 +30,8 @@ venv311/
 # Random Files/Folders
 private_tests/
 *temp.py
+*test.py
 
 # Config data
-configs/
+configs.example/
 !configs.example/

@@ -2,13 +2,13 @@ import importlib
 from pathlib import Path
 
 from jarvis.core.logger import Logger
-from jarvis.managers.node_manager import Manager
+from jarvis.managers.node_manager import NodeManager
 import jarvis.modules as modules
+from jarvis.utils.services.path_resolver import PathResolver
 
-MODULE_MANAGER_DIR = Path(__file__).parent / "module_builds"
-MODULES_DIR = Path(__file__).parent.parent
+MODULES_DIR = Path(__file__).parent
 
-class ModuleManager(Manager):
+class ModuleManager(NodeManager):
     def __init__(self, bus, name):
         self.bus = bus
         self.name = name
@@ -17,7 +17,7 @@ class ModuleManager(Manager):
         # Create Manager Attributes
         super().__init__()
         self.initialize(self.classes, package=[bus])
-        self.load_build(main_dir=(self.name, MODULE_MANAGER_DIR))
+        self.build = PathResolver.load_file("module_main", ".json", "project", "configs/managers/modules")
         self.load_structs(default_dir=("settings", MODULES_DIR))
 
     def start_modules(self):
@@ -25,9 +25,9 @@ class ModuleManager(Manager):
 
     def start_module(self, name):
         module = self.nodes.get(name)
-        if module and "start_thread" in dir(module) and callable(getattr(module,'start_thread', None)):
+        if module and "_start_thread" in dir(module) and callable(getattr(module,'_start_thread', None)):
             try:
-                module.start_thread()
+                module._start_thread()
             except Exception:
                 Logger.error(f"Unable to start thread for module: {name}")
             return True
@@ -36,12 +36,12 @@ class ModuleManager(Manager):
     def stop_mod(self, name=None):
         if name is None:
             for module in self.nodes.values():
-                if "stop_thread" in dir(module) and callable(getattr(module,'stop_thread', None)):
-                    module.stop_thread()
+                if "_stop_thread" in dir(module) and callable(getattr(module,'_stop_thread', None)):
+                    module._stop_thread()
 
         elif name in self.nodes:
-            self.nodes[name].stop_thread()
-    
+            self.nodes[name]._stop_thread()
+
     # Move to node manager
     def destruct(self, name=None):
         try:

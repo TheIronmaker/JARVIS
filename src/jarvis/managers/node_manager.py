@@ -3,8 +3,8 @@ from pathlib import Path
 from jarvis.core.logger import Logger
 from jarvis.utils.services.json_processor import load_json, merge_dictionary
 
-class Manager:    
-    def initialize(self, classes, package=[]):
+class NodeManager:    
+    def initialize(self, classes=None, package=[]):
         self.classes = classes
         self.package = package
         self.main_dir = None

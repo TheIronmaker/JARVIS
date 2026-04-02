@@ -1,0 +1,12 @@
+{
+"cycle_time": 0.01,
+"start_thread": true,
+"run_method":"app",
+"private_tests":false,
+"module_managers": [
+    {
+        "id": "main",
+        "enabled": true
+    }
+]
+}
