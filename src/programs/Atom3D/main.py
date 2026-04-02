@@ -19,9 +19,7 @@ import ctypes
 import sys
 import traceback
 import numpy as np
-from scipy.special import factorial
 import math
-import random
 
 # PySide6 imports
 from PySide6.QtCore import Qt
@@ -34,11 +32,12 @@ import OpenGL.GL as gl
 import glm
 
 # Local imports
-from programs.Atom3D.shaders import VERTEX_SHADER, FRAGMENT_SHADER
+from atom import Atom
+from shaders import VERTEX_SHADER, FRAGMENT_SHADER
 
 # N to equal 100000
 config = {
-    "orbital": {"n": 2, "l": 1, "m": 0, "N": 10000},
+    "orbital": {"n": 4, "l": 2, "m": 0, "N": 10000},
     "electron_r": 1.5
 }
 
@@ -52,161 +51,6 @@ def set_QSurfaceFormat():
 
     # Set default format for all QSurface instances (QOpenGLWidget, QOpenGLWindow, etc.)
     QSurfaceFormat.setDefaultFormat(format) # Apply settings globally
-
-
-class Particle:
-    def __init__(self, pos:glm.vec3, color:glm.vec4):
-        self.pos = pos
-        self.vel = glm.vec3(0.0)
-        self.color = color
-
-
-class Atom:
-    def __init__(self, config):
-        self.orbital = config['orbital']
-        self.n = self.orbital['n']
-        self.l = self.orbital['l']
-        self.m = self.orbital['m']
-        self.N = self.orbital['N']
-
-        self.a0 = 1.0
-        self.electron_r = config['electron_r']
-        
-        self.particles = np.zeros((self.N, 6), dtype=np.float32)
-
-    def sphericalToCartesian(self, r:np.ndarray, theta:np.ndarray, phi:np.ndarray) -> np.ndarray:
-        print("r: " + str(r), "\ntheta: " + str(theta), "\nphi: " + str(phi))
-        return np.stack((
-            r * np.sin(theta) * np.cos(phi),
-            r * np.cos(theta),
-            r * np.sin(theta) * np.sin(phi)),
-            axis=-1).astype(np.float32)
-
-    def sampleR(self, n, l, N) -> np.ndarray:
-        return np.random.random(size=N) * self.electron_r
-    
-    def sampleTheta(self, l, m, N) -> np.ndarray:
-        return np.arccos(1 - 2 * np.random.random(size=N))
-    
-    def samplePhi(self, N) -> np.ndarray:
-        return 2 * math.pi * np.random.random(size=N)
-    
-    def heatmap_fire(self, value) -> np.ndarray:
-        result = np.zeros((4), dtype=np.float32)
-
-        return result
-
-    def inferno(self, r, theta, phi, n:int, l:int, m:int) -> np.ndarray:
-        """ Colorization for particles using array based calculations """
-        # Temp:
-        n = int(n)
-        l = int(l)
-        m = int(m)
-
-        # r, theta, phi are all (N,) arrays. n, l, m are scalars
-        rho = 2 * r / (n * self.a0) #a
-        k = n - l - 1 #c
-        alpha = 2 * l + 1 #c
-
-        L = 1 #c
-        if k == 1:
-            # L = c + c - a = a
-            L = 1 + alpha - rho
-        elif k > 1:
-            Lm2 = 1 #c or a
-            Lm1 = 1 + alpha - rho #c - a = a
-            print(k)
-            for i in range(2, k + 1):
-                # L = ((2i - 1 + c - a) * Lm1 - (i - 1 + c) * Lm2) / i = a
-                # L = a * a
-                L = ((2*i - 1 + alpha - rho) * Lm1 - (i - 1 + alpha) * Lm2) / i
-                Lm2, Lm1 = Lm1, L
-        # Cases of orbital where L would not be one: 
-        return r
-
-    def inferno_single(self, r, theta, phi, n, l, m) -> np.ndarray:
-        """
-        Simple vectorized color mapping for particles.
-        Maps radial distance `r` to a color ramp from blue (close) to red (far).    
-        Returns an (N,4) numpy float32 array of RGBA values in [0,1].
-        """
-
-        rho = 2 * r / (self.n * self.a0)
-        k = self.n - self.l - 1
-        alpha = 2 * self.l + 1
-
-        L = 1
-        if k == 1:
-            L = 1 + alpha - rho
-        elif k > 1:
-            Lm2 = 1
-            Lm1 = 1 + alpha - rho
-            for i in range(2, k + 1):
-                L = ((2 * i - 1 + alpha - rho) * Lm1 - (i - 1 + alpha) * Lm2) / i
-                Lm2, Lm1 = Lm1, L
-        
-        # N_nl = sqrt( (2/na_0)**3 * (n - l - 1)! / (2n * (n + l)!) )
-        norm = np.sqrt((2 / (self.n * self.a0))**3 * factorial(self.n - self.l - 1) / (2 * self.n * factorial(self.n + self.l)))
-        R = norm * np.exp(-rho / 2) * rho**self.l * L
-        radial = R**2
-
-        x = math.cos(theta)
-
-        Pmm = 1
-        if self.m > 0:
-            somx = math.sqrt((1.0 - x) * (1.0 + x))
-            fact = 1.0
-            for i in range(1, self.m + 1):
-                Pmm *= -fact * somx
-                fact += 2.0
-        
-        Plm = None
-        if self.l == self.m:
-            Plm = Pmm
-        else:
-            Pmm1 = x * (2 * self.m + 1) * Pmm
-            if self.l == self.m + 1:
-                Plm = Pmm1
-            else:
-                for i in range(self.m + 2, self.l + 1):
-                    Plm = ((2 * i - 1) * x * Pmm1 - (i + self.m - 1) * Pmm) / (i - self.m)
-                    Pmm, Pmm1 = Pmm1, Plm
-
-        angular = Plm**2
-
-        #intensity = np.zeros(r.shape[0], dtype=np.float32)
-        intensity = radial * angular
-        return self.heatmap_fire(intensity * 1.5 * self.n**5)
-
-    def generateParticles(self, n=None, l=None, m=None, N=None):
-        if n is not None: self.n = n
-        if l is not None: self.l = l
-        if m is not None: self.m = m
-        if N is not None: self.N = N
-        
-        # Calculate all Cartesian coordinates at once using numpy arrays for better performance
-        pos = self.sphericalToCartesian(
-            self.sampleR(n, l, N),
-            self.sampleTheta(l, m, N),
-            self.samplePhi(N))
-
-        ### Build col:
-        # r = length of each vector in pos
-        # theta = arccos of y value divided by r for each vector in pos | Improved to avoid division by zero and ensure valid input for arccos
-        # phi = arctan2 of z and x values for each vector in pos
-        # Recompute spherical coords (robust) and compute colors
-
-        # Need array of linalg for each group of three values in pos, which is (N, 3)
-        print("pos shape:", pos.shape)
-        r = np.linalg.norm(pos)
-        print("latest r:", r)
-        # theta = np.arccos(pos[:, 1] / r) # Original | Must be valid input for arccos
-        theta = np.arccos(np.clip(pos[1] / (r + 1e-12), -1.0, 1.0))
-        phi = np.arctan2(pos[2], pos[0])
-        col = self.inferno_single(r, theta, phi, n, l, m) # Shape: N, 4 (glm vec4 -> np vec4)
-
-        # Store particles as list of (pos, color) tuples for downstream code
-        self.particles = list(zip(pos.astype(np.float32), col.astype(np.float32)))
 
 
 class Triangle:

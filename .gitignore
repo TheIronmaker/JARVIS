@@ -1,14 +1,9 @@
 # -------------------------
-# Random Files/Folders
+# Standard ignores
 # -------------------------
-private_tests/
-*temp.py
 
-# -------------------------
-# Python cache / artifacts
-# -------------------------
-__pycache__/
-*.py[cod]
+# Metadata
+.DS_Store
 
 # Editable install metadata
 *.egg-info/
@@ -20,8 +15,22 @@ build/
 # For Mediapipe library for hand tracking:
 venv311/
 
-# macOS Finder metadata
-.DS_Store
-
-# VS Code settings folder
+# IDE settings folders
 .vscode/
+.idea/
+
+# Build artifacts
+*.py[cod]
+
+
+# -------------------------
+# Unique to this project
+# -------------------------
+
+# Random Files/Folders
+private_tests/
+*temp.py
+
+# Config data
+configs/
+!configs.example/

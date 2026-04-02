@@ -4,18 +4,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-import time
-
-# Specific imports
-import glm
 
 class Atom:
     def __init__(self, config):
         self.orbital = config['orbital']
-        self.N = config['N']
         self.n = self.orbital['n']
         self.l = self.orbital['l']
         self.m = self.orbital['m']
+        self.N = self.orbital['N']
 
         self.a0 = 1.0
         self.electron_r = config['electron_r']
@@ -116,7 +112,8 @@ class Atom:
         # Option B (smoother interpolation for 3D): return np.interp(rng.random(self.N), cdf, theta)
     
     def samplePhi(self) -> np.ndarray:
-        return 2 * math.pi * np.random.random(size=self.N, dtype=np.float32)
+        rng = np.random.default_rng()
+        return 2 * math.pi * rng.random(size=self.N, dtype=np.float32)
     
     def calculateProbabilityFlow(self):
         r = np.linalg.norm(self.pos, axis=1, keepdims=True)
@@ -215,18 +212,22 @@ class Atom:
         self.particles = np.column_stack((pos, self.col)).astype(np.float32)
 
 
-config = {
-    "orbital": {"n": 5, "l": 2, "m": 1},
-    "N": 10000,
-    "electron_r": 1.5
-}
+if __name__ == "__main__":
+    config = {
+        "orbital": {"n": 3, "l": 2, "m": 1, "N": 10000},
+        "electron_r": 1
+    }
 
-atom = Atom(config)
-atom.generateParticles()
+    atom = Atom(config)
+    atom.generateParticles()
 
-x, y, z = atom.pos[:, 0], atom.pos[:, 1], atom.pos[:, 2]
-fig = plt.figure()
-ax = fig.add_subplot(111, projection='3d')
-ax.scatter(x, y, z)
-ax.set_xlabel('X'); ax.set_ylabel('Y'); ax.set_zlabel('Z')
-plt.show()
+    x, y, z = atom.pos[:, 0], atom.pos[:, 1], atom.pos[:, 2]
+    colors = atom.particles[:, 3:6]
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(x, y, z, c=colors, s=20) 
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+
+    plt.show()

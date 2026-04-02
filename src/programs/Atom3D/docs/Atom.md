@@ -56,11 +56,16 @@ Finally, this new `u` value is multiplied by the `dr` scalar, and returned as th
 - `dtheta` $=\frac{\pi}{N-1}$
 
 ### Array Values
-- `theta` $\theta$: (array of random numpy range [0, 1], length N) x `dtheta`
+- `theta` $\theta$: (array of random numpy range [0, 1], length N)
 - `x` $=\cos(\theta)$   
 - `Pmm`: numpy ones array of length N
 - `Pll` $=(2\text{ll}-1)\cdot xP_{m1m}-(\text{ll}+m-1)\cdot P_{mm}\cdot(\text{ll}-m)^{-1}$
 - `pdf` = $\sin(\theta)\cdot P_{lm}^2$
+- `cdf` = `cumsum(pdf)`
+- `rng`: random number generator
+- `u`: an array of random numbers generated of size `N`
+- `idx`: assigns cdf calculated values to `u`
+- `return` value: `idx` $\cdot$ `dtheta`
 
 ## `def` Sample Phi $\phi$
 An array of random values is generated and the function returns $2\cdot\pi\cdot\text{array}$
