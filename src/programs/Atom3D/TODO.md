@@ -4,18 +4,36 @@
 `def` sampleTheta  
 `def` samplePhi  
 `def` inferno  
-`def` heatmap_fire
+`def` heatmap_fire  
 `def` generateParticles
 
-# Missing functions and sections of Code
-calculateProbabilityFlow
-
-`class` Camera:
+### `class` Camera:
+- position
+- update
 - processMouseMove
 - processMouseButton
 - processScroll
 
-Engine:
-- `var` engine.vertices
+### `class` Engine
+`def` setupCameraCallbacks
 
-More TODO yet to be made - someday this will work...
+# Missing functions and sections of Code
+calculateProbabilityFlow
+
+### `class` Engine
+- Initialization code
+- Code for creating shaders
+- model, view, proj, and color Loc
+- sphericalToCartesian?
+- CreateVBOVAO
+- CreateVBOVAO (v2)
+- drawSpheres
+
+### `struct` Grid
+- Draw
+- DrawGrid
+- CreateGridVertices
+
+## `class` main
+- Code for creating window and managing lifecycle
+- Termination code

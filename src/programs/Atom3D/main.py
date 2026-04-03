@@ -20,30 +20,20 @@ import traceback
 
 # PySide6 imports
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QSurfaceFormat
 from PySide6.QtWidgets import QApplication, QMainWindow
 
 # Local imports
 from atom import Atom
-from opengl_apple import OpenGLApple
+from opengl_apple import OpenGLApple, set_QSurfaceFormat
+
+# Set the QSurfaceFormat before creating QApplication
+set_QSurfaceFormat()
 
 # N to equal 100000
 config = {
     "orbital": {"n": 4, "l": 2, "m": 0, "N": 10000},
     "electron_r": 1.5
 }
-
-def set_QSurfaceFormat():
-    format: QSurfaceFormat = QSurfaceFormat()
-    format.setSamples(4) # Request 4x multisampling for anti-aliasing
-    format.setMajorVersion(4) # Request OpenGL version 4.1 as the highest supported version by macOS
-    format.setMinorVersion(1)
-    format.setProfile(QSurfaceFormat.CoreProfile) # Request a Core Profile context, which removes deprecated features
-    format.setDepthBufferSize(24) # Request a 24-bit depth buffer for better z-depth precision
-
-    # Set default format for all QSurface instances (QOpenGLWidget, QOpenGLWindow, etc.)
-    QSurfaceFormat.setDefaultFormat(format) # Apply settings globally
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()

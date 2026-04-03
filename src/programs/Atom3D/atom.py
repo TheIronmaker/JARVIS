@@ -21,10 +21,12 @@ class Atom:
     def sphericalToCartesian(self, r:np.ndarray, theta:np.ndarray, phi:np.ndarray) -> np.ndarray:
         """
         Convert spherical coordinates (r, theta, phi) to Cartesian coordinates (x, y, z).
-        r: radial distance
-        theta: polar angle (0 to pi)
-        phi: azimuthal angle (0 to 2pi)
-        Returns an (N, 3) numpy array of Cartesian coordinates.
+        Args:
+            r: radial distance
+            theta: polar angle (0 to pi)
+            phi: azimuthal angle (0 to 2pi)
+        Returns:
+            numpy array of size (N, 3) Cartesian coordinates.
         """
         return np.stack((
             r * np.sin(theta) * np.cos(phi),

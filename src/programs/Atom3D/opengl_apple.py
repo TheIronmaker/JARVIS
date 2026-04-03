@@ -3,7 +3,9 @@ import math
 import numpy as np
 import ctypes
 
-from PySide6.QtGui import QSurfaceFormat
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QCursor, QSurfaceFormat
+from PySide6.QtWidgets import QApplication
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
 import OpenGL.GL as gl
 import glm
@@ -64,8 +66,9 @@ class Triangle:
         gl.glEnableVertexAttribArray(1)
         gl.glBindVertexArray(0)
 
-class Camera:
-    def __init__(self):
+class Camera():
+    def __init__(self, parent):
+        self.parent = parent
         self.target = np.array([0.0, 0.0, 0.0], dtype=np.float32)
         self.radius = 50.0
         self.azimuth = 0.0
@@ -73,7 +76,8 @@ class Camera:
         self.orbit_speed = 0.01
         self.pan_speed = 0.01
         self.zoom_speed = 0.1
-
+        
+        self.lock_pos = None
         self.dragging = False
         self.panning = False
 
@@ -93,19 +97,43 @@ class Camera:
             return np.array([0.0, 0.0, 0.0], dtype=np.float32)
 
     def update(self):
-        self.target = np.identity(3, dtype=np.float32)
+        self.target = np.zeros(3, dtype=np.float32)
+    
+    def process_mouse_move(self, x, y):
+        dx = x - self.lastX
+        dy = y - self.lastY
+        if self.dragging:
+            self.azimuth += dx * self.orbit_speed
+            self.elevation -= dy * self.orbit_speed
+            self.elevation = np.clip(self.elevation, 0.01, math.pi - 0.01)
+        self.lastX = x
+        self.lastY = y
+        self.update()
+    
+    def process_mouse_press(self, button):
+        if button in (Qt.LeftButton, Qt.MiddleButton):
+            self.lock_pos = QCursor.pos()
+            self.dragging = True
+            self.parent.grabMouse()
+            QApplication.setOverrideCursor(Qt.BlankCursor)
 
-class Engine:
-    def __init__(self):
-        self.camera = Camera()
+    def process_mouse_release(self, button):
+        if button in (Qt.LeftButton, Qt.MiddleButton):
+            self.dragging = False
+            QCursor.setPos(self.lock_pos)
+            self.parent.releaseMouse()
+            QApplication.restoreOverrideCursor()
+    
+    def process_scroll(self, yoffset):
+        self.radius -= yoffset * self.zoom_speed
+        self.radius = max(0.1, self.radius)
+        self.update()
+
 
 class OpenGLApple(QOpenGLWidget):
-    class Engine:
-        def __init__(self, parent):
-            self.parent = parent
-    
     def __init__(self, parent):
         super().__init__(parent)
+        self.setMouseTracking(True)
         self.vertex_shader = VERTEX_SHADER
         self.fragment_shader = FRAGMENT_SHADER
 
@@ -123,8 +151,24 @@ class OpenGLApple(QOpenGLWidget):
         self.shader_id = None
         self.polygon_mode = gl.GL_FILL
 
-        self.camera = Camera()
+        self.camera = Camera(self)
     
+    def mouseMoveEvent(self, event):
+        self.camera.process_mouse_move(event.position().x(), event.position().y())
+        return super().mouseMoveEvent(event)
+
+    def mousePressEvent(self, event):
+        self.camera.process_mouse_press(event.button())
+        return super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        self.camera.process_mouse_release(event.button())
+        return super().mouseReleaseEvent(event)
+
+    def wheelEvent(self, event):
+        self.camera.process_scroll(event.angleDelta().y())
+        return super().wheelEvent(event)
+
     def create_VBOVAO(self, vertices:np.float32):
         vao = gl.glGenVertexArrays(1)
         vbo = gl.glGenBuffers(1)
@@ -182,11 +226,11 @@ class OpenGLApple(QOpenGLWidget):
         self.projLoc = gl.glGetUniformLocation(self.shader_id, "projection")
         self.colorLoc = gl.glGetUniformLocation(self.shader_id, "objectColor")
 
-        print(f"\nUniform locations:\n"
-              f"model = {self.modelLoc if self.modelLoc != -1 else 'Not found'}\n"
-              f"view = {self.viewLoc if self.viewLoc != -1 else 'Not found'}\n"
-              f"projection = {self.projLoc if self.projLoc != -1 else 'Not found'}\n"
-              f"objectColor = {self.colorLoc if self.colorLoc != -1 else 'Not found'}")
+        # print(f"\nUniform locations:\n"
+        #       f"model = {self.modelLoc if self.modelLoc != -1 else 'Not found'}\n"
+        #       f"view = {self.viewLoc if self.viewLoc != -1 else 'Not found'}\n"
+        #       f"projection = {self.projLoc if self.projLoc != -1 else 'Not found'}\n"
+        #       f"objectColor = {self.colorLoc if self.colorLoc != -1 else 'Not found'}")
 
         gl.glUseProgram(self.shader_id)
         
