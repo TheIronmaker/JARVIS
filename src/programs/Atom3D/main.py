@@ -34,6 +34,7 @@ config = {
     "orbital": {"n": 4, "l": 2, "m": 0, "N": 10000},
     "electron_r": 1.5
 }
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -144,8 +145,6 @@ def app(*args):
         app = DebugApplication(sys.argv)
     else:
         app = QApplication(sys.argv)
-
-    set_QSurfaceFormat()
 
     window = MainWindow(*args)
     window.resize(1200, 800)

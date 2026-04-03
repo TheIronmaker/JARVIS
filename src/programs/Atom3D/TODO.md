@@ -15,7 +15,9 @@
 - processScroll
 
 ### `class` Engine
-`def` setupCameraCallbacks
+- sphere vertices
+- setupCameraCallbacks
+- CreateVBOVAO
 
 # Missing functions and sections of Code
 calculateProbabilityFlow
@@ -25,8 +27,6 @@ calculateProbabilityFlow
 - Code for creating shaders
 - model, view, proj, and color Loc
 - sphericalToCartesian?
-- CreateVBOVAO
-- CreateVBOVAO (v2)
 - drawSpheres
 
 ### `struct` Grid

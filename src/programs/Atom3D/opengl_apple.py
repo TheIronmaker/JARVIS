@@ -7,7 +7,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtGui import QCursor, QSurfaceFormat
 from PySide6.QtWidgets import QApplication
 from PySide6.QtOpenGLWidgets import QOpenGLWidget
-import OpenGL.GL as gl
+from OpenGL.GL import *
 import glm
 
 from shaders import VERTEX_SHADER, FRAGMENT_SHADER
@@ -46,25 +46,25 @@ class Triangle:
         
         # fmt: off | on ?
         # allocate a VertexArray
-        self.vao_id = gl.glGenVertexArrays(1)
+        self.vao_id = glGenVertexArrays(1)
         # now bind a vertex array object for our verts
-        gl.glBindVertexArray(self.vao_id)
+        glBindVertexArray(self.vao_id)
 
-        vbo_id = gl.glGenBuffers(1)
+        vbo_id = glGenBuffers(1)
         #  now bind this to the VBO buffer
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo_id)
+        glBindBuffer(GL_ARRAY_BUFFER, vbo_id)
         #  allocate the buffer data
         # Use .nbytes for numpy arrays to get the total byte size. OpenGL can sometimes struggle on MacOS with this.
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, self.vertices.nbytes, self.vertices, gl.GL_STATIC_DRAW)
+        glBufferData(GL_ARRAY_BUFFER, self.vertices.nbytes, self.vertices, GL_STATIC_DRAW)
         #  now fix this to the attribute buffer 0
-        gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, self.vertices.itemsize * 6, ctypes.c_void_p(0))
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, self.vertices.itemsize * 6, ctypes.c_void_p(0))
         #  enable and bind this attribute (will be inPosition in the shader)
-        gl.glEnableVertexAttribArray(0)
+        glEnableVertexAttribArray(0)
         #  now fix this to the attribute buffer 0
-        gl.glVertexAttribPointer(1, 3, gl.GL_FLOAT, gl.GL_FALSE, self.vertices.itemsize * 6, ctypes.c_void_p(self.vertices.itemsize * 3))
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, self.vertices.itemsize * 6, ctypes.c_void_p(self.vertices.itemsize * 3))
         #  enable and bind this attribute (will be inPosition in the shader)
-        gl.glEnableVertexAttribArray(1)
-        gl.glBindVertexArray(0)
+        glEnableVertexAttribArray(1)
+        glBindVertexArray(0)
 
 class Camera():
     def __init__(self, parent):
@@ -131,16 +131,12 @@ class Camera():
 
 
 class OpenGLApple(QOpenGLWidget):
-    def __init__(self, parent):
+    def __init__(self, parent, vertices:np.float32=None):
         super().__init__(parent)
         self.setMouseTracking(True)
+        self.vertices = vertices if vertices is not None else self.generate_sphere_vertices()
         self.vertex_shader = VERTEX_SHADER
         self.fragment_shader = FRAGMENT_SHADER
-
-        # Temp definitions
-        self.sphereVAO = None
-        self.sphereVBO = None
-        self.sphereVertexCount = None
 
         self.modelLoc = None
         self.viewLoc = None
@@ -149,7 +145,7 @@ class OpenGLApple(QOpenGLWidget):
 
         # OpenGL states (temp)
         self.shader_id = None
-        self.polygon_mode = gl.GL_FILL
+        self.polygon_mode = GL_FILL
 
         self.camera = Camera(self)
     
@@ -169,74 +165,89 @@ class OpenGLApple(QOpenGLWidget):
         self.camera.process_scroll(event.angleDelta().y())
         return super().wheelEvent(event)
 
-    def create_VBOVAO(self, vertices:np.float32):
-        vao = gl.glGenVertexArrays(1)
-        vbo = gl.glGenBuffers(1)
+    @staticmethod
+    def sphericalToCartesian(r:np.ndarray, theta:np.ndarray, phi:np.ndarray) -> np.ndarray:
+        return np.stack((
+            r * np.sin(theta) * np.cos(phi),
+            r * np.cos(theta),
+            r * np.sin(theta) * np.sin(phi)),
+            axis=-1).astype(np.float32)
 
-        gl.glBindVertexArray(vao)
-        gl.glBindBuffer(gl.GL_ARRAY_BUFFER, vbo)
-        gl.glBufferData(gl.GL_ARRAY_BUFFER, vertices.nbytes, vertices, gl.GL_STATIC_DRAW)
+    def generate_sphere_vertices(self, r=0.05, stacks=10, sectors=10):
+        phi = np.linspace(0, np.pi, stacks + 1)
+        theta = np.linspace(0, 2 * np.pi, sectors + 1)
+        phi, theta = np.meshgrid(phi, theta)
+        grid = self.sphericalToCartesian(r, theta, phi)
 
-        gl.glVertexAttribPointer(0, 3, gl.GL_FLOAT, gl.GL_FALSE, 12, None)
-        gl.glEnableVertexAttribArray(0)
-        gl.glBindVertexArray(0)
+        v1, v2, v3, v4 = grid[:-1, :-1], grid[1:, :-1], grid[1:, 1:], grid[:-1, 1:]
+        return np.stack([v1, v2, v3, v1, v3, v4], axis=2).flatten()
 
     def check_shader_compilation_status(self, shader_id):
-        if not gl.glGetShaderiv(shader_id, gl.GL_COMPILE_STATUS):
-            e = gl.glGetShaderInfoLog(shader_id)
+        if not glGetShaderiv(shader_id, GL_COMPILE_STATUS):
+            e = glGetShaderInfoLog(shader_id)
             raise RuntimeError(f"Shader compilation failed: {shader_id}\n{e}")
     
     def initializeGL(self):
         # Make the OpenGL context current in this thread before calling any OpenGL functions
         self.makeCurrent()
-        gl.glClearColor(9/255, 14/255, 22/255, 1.0) # Set the background color
-        gl.glEnable(gl.GL_DEPTH_TEST) # Enable z-depth checking
-        gl.glEnable(gl.GL_MULTISAMPLE) # Enable multisampling for anti-aliasing
+        glClearColor(9/255, 14/255, 22/255, 1.0) # Set the background color
+        glEnable(GL_DEPTH_TEST) # Enable z-depth checking
+        glEnable(GL_MULTISAMPLE) # Enable multisampling for anti-aliasing
 
-        self.triangle = Triangle(1.0)
+        self.triangle = Triangle(1.0) #@revisit
+
+        self.sphereVertexCount = len(self.vertices) // 3
+        self.create_VBOVAO(self.vertices)
         self.load_shaders()
 
-    def load_shaders(self, vertex_source: str = None, fragment_source: str = None):
-        if vertex_source is not None:
-            self.vertex_shader = vertex_source
-        if fragment_source is not None:
-            self.fragment_shader = fragment_source
-        
-        self.shader_id = gl.glCreateProgram()
+    def create_VBOVAO(self, vertices:np.float32, vertexCount=None):
+        vao = glGenVertexArrays(1)
+        vbo = glGenBuffers(1)
+        glBindVertexArray(vao)
+        glBindBuffer(GL_ARRAY_BUFFER, vbo)
+        glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, None)
+        glEnableVertexAttribArray(0)
+        # Close the VAO so other instances don't break it
+        glBindVertexArray(0)
 
+    def destroy_VBOVAO(self, vao, vbo):
+        """ Takes vao and vbo IDs and deletes them from OpenGL GPU memory. This prevents memory leaks when creating many new buffers. """
+        glDeleteVertexArrays(1, [vao])
+        glDeleteBuffers(1, [vbo])
+
+    def load_shaders(self):
         # Create and compile vertex and fragment shaders
-        vertex_id = gl.glCreateShader(gl.GL_VERTEX_SHADER) # Create vertex ID
-        gl.glShaderSource(vertex_id, self.vertex_shader) # Must set shader source before compiling
-        gl.glCompileShader(vertex_id)
-        self.check_shader_compilation_status(vertex_id)
+        vertexShader = glCreateShader(GL_VERTEX_SHADER) # Create vertex ID
+        glShaderSource(vertexShader, 1, self.vertex_shader) # Must set shader source before compiling
+        glCompileShader(vertexShader)
+
+        self.check_shader_compilation_status(vertexShader)
     
-        fragment_id = gl.glCreateShader(gl.GL_FRAGMENT_SHADER) # Create fragment ID
-        gl.glShaderSource(fragment_id, self.fragment_shader) # Set shader source before compiling
-        gl.glCompileShader(fragment_id)
-        self.check_shader_compilation_status(fragment_id)
+        fragmentShader = glCreateShader(GL_FRAGMENT_SHADER) # Create fragment ID
+        glShaderSource(fragmentShader, 1, self.fragment_shader) # Set shader source before compiling
+        glCompileShader(fragmentShader)
+
+        self.check_shader_compilation_status(fragmentShader)
 
         # Attach, link, and use shaders
-        gl.glAttachShader(self.shader_id, vertex_id)
-        gl.glAttachShader(self.shader_id, fragment_id)
-        gl.glLinkProgram(self.shader_id)
+        self.shaderProgram = glCreateProgram()
+        glAttachShader(self.shaderProgram, vertexShader)
+        glAttachShader(self.shaderProgram, fragmentShader)
+        glLinkProgram(self.shaderProgram)
 
         # Retrieve uniform locations
-        self.modelLoc = gl.glGetUniformLocation(self.shader_id, "model")
-        self.viewLoc = gl.glGetUniformLocation(self.shader_id, "view")
-        self.projLoc = gl.glGetUniformLocation(self.shader_id, "projection")
-        self.colorLoc = gl.glGetUniformLocation(self.shader_id, "objectColor")
+        self.modelLoc = glGetUniformLocation(self.shaderProgram, "model")
+        self.viewLoc = glGetUniformLocation(self.shaderProgram, "view")
+        self.projLoc = glGetUniformLocation(self.shaderProgram, "projection")
+        self.colorLoc = glGetUniformLocation(self.shaderProgram, "objectColor")
 
-        # print(f"\nUniform locations:\n"
-        #       f"model = {self.modelLoc if self.modelLoc != -1 else 'Not found'}\n"
-        #       f"view = {self.viewLoc if self.viewLoc != -1 else 'Not found'}\n"
-        #       f"projection = {self.projLoc if self.projLoc != -1 else 'Not found'}\n"
-        #       f"objectColor = {self.colorLoc if self.colorLoc != -1 else 'Not found'}")
-
-        gl.glUseProgram(self.shader_id)
-        
-        # Cleanup by deleting shaders
-        gl.glDeleteShader(vertex_id)
-        gl.glDeleteShader(fragment_id)
+        # OpenGL shader id's on MacOS do not persist across frames.
+        # Calling glUseProgram ensures the shader is acive and applies changes
+        glUseProgram(self.shaderProgram)
+        # Deleting shaders after use prevents GPU memory leaks
+        glDeleteShader(vertexShader)
+        glDeleteShader(fragmentShader)
 
     def resizeGL(self, w, h):
         # Might be able to remove ratio calculations from paintGL with this method
@@ -252,13 +263,13 @@ class OpenGLApple(QOpenGLWidget):
 
         # Match the viewport and window size to handle high-DPI displays correctly, mainly for MacOS
         ratio = self.devicePixelRatio()
-        gl.glViewport(0, 0, int(self.width() * ratio), int(self.height() * ratio))
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
-        #gl.glPolygonMode(gl.GL_FRONT_AND_BACK, self.polygon_mode)
+        glViewport(0, 0, int(self.width() * ratio), int(self.height() * ratio))
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        #glPolygonMode(GL_FRONT_AND_BACK, self.polygon_mode)
 
         # QOpenGLWidget on MacOS does not maintain OpenGL data across frames, so we need to re-bind our shader program and vertex arrays every time we draw.
         if self.shader_id is not None:
-            gl.glUseProgram(self.shader_id)
+            glUseProgram(self.shader_id)
         else:
             raise RuntimeError("Shader program is not initialized. Cannot render without shaders.")
         
@@ -268,30 +279,28 @@ class OpenGLApple(QOpenGLWidget):
         view = glm.lookAt(self.camera.position(), self.camera.target, np.array([0, 1, 0], dtype=np.float32))
 
         
-        gl.glUniformMatrix4fv(self.viewLoc, 1, gl.GL_FALSE, glm.value_ptr(view))
-        gl.glUniformMatrix4fv(self.projLoc, 1, gl.GL_FALSE, glm.value_ptr(projection))
+        glUniformMatrix4fv(self.viewLoc, 1, GL_FALSE, glm.value_ptr(view))
+        glUniformMatrix4fv(self.projLoc, 1, GL_FALSE, glm.value_ptr(projection))
 
-        #gl.glBindVertexArray(self.sphereVAO)
+        #glBindVertexArray(self.sphereVAO)
 
-        # Much code for particles, then: gl.glUniformMatrix4fv(self.modelLoc, 1, GL_FALSE, glm.value_ptr(model))
+        # Much code for particles, then: glUniformMatrix4fv(self.modelLoc, 1, GL_FALSE, glm.value_ptr(model))
 
-        gl.glUniform4f(self.colorLoc, 1.0, 0.5, 0.31, 1.0)
-
-
+        glUniform4f(self.colorLoc, 1.0, 0.5, 0.31, 1.0)
 
         # Bind arrays and draw
-        gl.glBindVertexArray(self.triangle.vao_id)
-        gl.glDrawArrays(gl.GL_TRIANGLES, 0, 3)
+        glBindVertexArray(self.triangle.vao_id)
+        glDrawArrays(GL_TRIANGLES, 0, 3)
 
-        gl.glBindVertexArray(0) # Unbind the vertex array after drawing
-        gl.glUseProgram(0) # Unbind the shader program after drawing
+        glBindVertexArray(0) # Unbind the vertex array after drawing
+        glUseProgram(0) # Unbind the shader program after drawing
 
         # Any glViewport or glClear calls should be made in paintGL to ensure they are applied every frame, especially after window resizing.
 
     def drawSpheres(self, particles):
-        gl.glClear(gl.GL_COLOR_BUFFER_BIT | gl.GL_DEPTH_BUFFER_BIT)
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
         if self.shader_id is not None:
-            gl.glUseProgram(self.shader_id)
+            glUseProgram(self.shader_id)
         else:
             raise RuntimeError("Shader program is not initialized. Cannot render without shaders.")
         
@@ -300,11 +309,11 @@ class OpenGLApple(QOpenGLWidget):
         projection = glm.perspective(glm.radians(45.0), aspect, 0.1, 100.0)
         view = glm.lookAt(self.camera.position(), self.camera.target, np.array([0, 1, 0], dtype=np.float32))
 
-        gl.glUniformMatrix4fv(self.viewLoc, 1, gl.GL_FALSE, glm.value_ptr(view))
-        gl.glUniformMatrix4fv(self.projLoc, 1, gl.GL_FALSE, glm.value_ptr(projection))
+        glUniformMatrix4fv(self.viewLoc, 1, GL_FALSE, glm.value_ptr(view))
+        glUniformMatrix4fv(self.projLoc, 1, GL_FALSE, glm.value_ptr(projection))
 
-        #gl.glBindVertexArray(self.sphereVAO)
-        # Much code for particles, then: gl.glUniformMatrix4fv(self.modelLoc, 1, GL_FALSE, glm.value_ptr(model))
+        #glBindVertexArray(self.sphereVAO)
+        # Much code for particles, then: glUniformMatrix4fv(self.modelLoc, 1, GL_FALSE, glm.value_ptr(model))
         for p in particles:
             if p.pos.x ==1:pass
         
