@@ -210,9 +210,11 @@ class Atom:
         theta = np.arccos(np.clip(pos[:, 1] / r, -1.0, 1.0)) # avoids division by zero and ensures valid input for arccos
         phi = np.arctan2(pos[:, 2], pos[:, 0])
         self.col = self.inferno(r, theta, phi)
-        self.pos = pos
-        self.particles = np.column_stack((pos, self.col)).astype(np.float32)
+        self.pos = pos.astype(np.float32) # shape (N,) with fields 'pos' and 'color'
 
+        self.particles = np.zeros((self.N), dtype=[('pos', 'f4', (3,)), ('color', 'f4', (4,))])
+        self.particles['pos'] = pos
+        self.particles['color'] = self.col
 
 if __name__ == "__main__":
     config = {

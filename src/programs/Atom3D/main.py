@@ -15,7 +15,9 @@ All scientific equations used are standard physics implementations.
 """
 
 # System imports
+import os
 import sys
+import atexit
 import traceback
 
 # PySide6 imports
@@ -152,5 +154,11 @@ def app(*args):
 
     sys.exit(app.exec())
 
+@atexit.register
+def clear_terminal(ask=None):
+    if (input("Press Enter to clear terminal... ") if ask is None else "") == "":
+        os.system('cls' if os.name == 'nt' else 'clear\nclear')
+
 if __name__ == "__main__":
+    clear_terminal(ask=True)
     app()

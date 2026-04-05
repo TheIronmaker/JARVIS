@@ -13,7 +13,7 @@ import glm
 from shaders import VERTEX_SHADER, FRAGMENT_SHADER
 
 def set_QSurfaceFormat():
-    format: QSurfaceFormat = QSurfaceFormat()
+    format = QSurfaceFormat()
     format.setSamples(4) # Request 4x multisampling for anti-aliasing
     format.setMajorVersion(4) # Request OpenGL version 4.1 as the highest supported version by macOS
     format.setMinorVersion(1)
@@ -22,49 +22,6 @@ def set_QSurfaceFormat():
 
     # Set default format for all QSurface instances (QOpenGLWidget, QOpenGLWindow, etc.)
     QSurfaceFormat.setDefaultFormat(format) # Apply settings globally
-
-class Triangle:
-    def __init__(self, size):
-        self.size = size
-        self.vertices = np.array([
-            -0.75, -0.75,0.0,1.0, 0.0, 0.0,
-            0.0,  0.75,0.0, 0.0, 1.0,  0.0,
-            0.75,  -0.75, 0.0, 0.0,  0.0, 1.0,
-            ],dtype=np.float32)
-
-        self._create_triangle(size)
-
-    def change_size(self, size):
-        self.size = size
-        self._create_triangle(size)
-
-    def _create_triangle(self, change:float=0):
-        # Scale the vertex positions by the specified size
-        self.vertices[0:3] = self.vertices[0:3] * change
-        self.vertices[6:9] = self.vertices[6:9] * change
-        self.vertices[12:15] = self.vertices[12:15] * change
-        
-        # fmt: off | on ?
-        # allocate a VertexArray
-        self.vao_id = glGenVertexArrays(1)
-        # now bind a vertex array object for our verts
-        glBindVertexArray(self.vao_id)
-
-        vbo_id = glGenBuffers(1)
-        #  now bind this to the VBO buffer
-        glBindBuffer(GL_ARRAY_BUFFER, vbo_id)
-        #  allocate the buffer data
-        # Use .nbytes for numpy arrays to get the total byte size. OpenGL can sometimes struggle on MacOS with this.
-        glBufferData(GL_ARRAY_BUFFER, self.vertices.nbytes, self.vertices, GL_STATIC_DRAW)
-        #  now fix this to the attribute buffer 0
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, self.vertices.itemsize * 6, ctypes.c_void_p(0))
-        #  enable and bind this attribute (will be inPosition in the shader)
-        glEnableVertexAttribArray(0)
-        #  now fix this to the attribute buffer 0
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, self.vertices.itemsize * 6, ctypes.c_void_p(self.vertices.itemsize * 3))
-        #  enable and bind this attribute (will be inPosition in the shader)
-        glEnableVertexAttribArray(1)
-        glBindVertexArray(0)
 
 class Camera():
     def __init__(self, parent):
@@ -133,6 +90,8 @@ class Camera():
 class OpenGLApple(QOpenGLWidget):
     def __init__(self, parent, vertices:np.float32=None):
         super().__init__(parent)
+        self.parent = parent
+
         self.setMouseTracking(True)
         self.vertices = vertices if vertices is not None else self.generate_sphere_vertices()
         self.vertex_shader = VERTEX_SHADER
@@ -190,42 +149,21 @@ class OpenGLApple(QOpenGLWidget):
     def initializeGL(self):
         # Make the OpenGL context current in this thread before calling any OpenGL functions
         self.makeCurrent()
-        glClearColor(9/255, 14/255, 22/255, 1.0) # Set the background color
         glEnable(GL_DEPTH_TEST) # Enable z-depth checking
         glEnable(GL_MULTISAMPLE) # Enable multisampling for anti-aliasing
 
-        self.triangle = Triangle(1.0) #@revisit
-
         self.sphereVertexCount = len(self.vertices) // 3
         self.create_VBOVAO(self.vertices)
-        self.load_shaders()
 
-    def create_VBOVAO(self, vertices:np.float32, vertexCount=None):
-        vao = glGenVertexArrays(1)
-        vbo = glGenBuffers(1)
-        glBindVertexArray(vao)
-        glBindBuffer(GL_ARRAY_BUFFER, vbo)
-        glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, None)
-        glEnableVertexAttribArray(0)
-        # Close the VAO so other instances don't break it
-        glBindVertexArray(0)
-
-    def destroy_VBOVAO(self, vao, vbo):
-        """ Takes vao and vbo IDs and deletes them from OpenGL GPU memory. This prevents memory leaks when creating many new buffers. """
-        glDeleteVertexArrays(1, [vao])
-        glDeleteBuffers(1, [vbo])
-
-    def load_shaders(self):
         # Create and compile vertex and fragment shaders
         vertexShader = glCreateShader(GL_VERTEX_SHADER) # Create vertex ID
-        glShaderSource(vertexShader, 1, self.vertex_shader) # Must set shader source before compiling
+        glShaderSource(vertexShader, self.vertex_shader) # Must set shader source before compiling
         glCompileShader(vertexShader)
 
         self.check_shader_compilation_status(vertexShader)
     
         fragmentShader = glCreateShader(GL_FRAGMENT_SHADER) # Create fragment ID
-        glShaderSource(fragmentShader, 1, self.fragment_shader) # Set shader source before compiling
+        glShaderSource(fragmentShader, self.fragment_shader) # Set shader source before compiling
         glCompileShader(fragmentShader)
 
         self.check_shader_compilation_status(fragmentShader)
@@ -244,10 +182,26 @@ class OpenGLApple(QOpenGLWidget):
 
         # OpenGL shader id's on MacOS do not persist across frames.
         # Calling glUseProgram ensures the shader is acive and applies changes
-        glUseProgram(self.shaderProgram)
+        #glUseProgram(self.shaderProgram)
         # Deleting shaders after use prevents GPU memory leaks
-        glDeleteShader(vertexShader)
-        glDeleteShader(fragmentShader)
+        #glDeleteShader(vertexShader)
+        #glDeleteShader(fragmentShader)
+
+    def create_VBOVAO(self, vertices:np.float32, vertexCount=None):
+        self.sphereVAO = glGenVertexArrays(1)
+        self.sphereVBO = glGenBuffers(1)
+        glBindVertexArray(self.sphereVAO)
+        glBindBuffer(GL_ARRAY_BUFFER, self.sphereVBO)
+        glBufferData(GL_ARRAY_BUFFER, vertices.nbytes, vertices, GL_STATIC_DRAW)
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 12, None)
+        glEnableVertexAttribArray(0)
+        # Close the VAO so other instances don't break it
+        glBindVertexArray(0)
+
+    def destroy_VBOVAO(self, vao, vbo):
+        """ Takes vao and vbo IDs and deletes them from OpenGL GPU memory. This prevents memory leaks when creating many new buffers. """
+        glDeleteVertexArrays(1, [vao])
+        glDeleteBuffers(1, [vbo])
 
     def resizeGL(self, w, h):
         # Might be able to remove ratio calculations from paintGL with this method
@@ -255,65 +209,41 @@ class OpenGLApple(QOpenGLWidget):
         self.window_width = int(w * ratio)
         self.window_height = int(h * ratio)
 
-    def paintGL(self):
+    def paintGL(self): # drawSpheres
         """
         Main rendering loop called to redraw window. All drawing commands should be issued here.
+        Any glViewport or glClear calls should be made in paintGL to ensure they are applied every frame, especially after window resizing.
         """
         self.makeCurrent()
+        glClearColor(9/255, 14/255, 22/255, 1.0)
 
         # Match the viewport and window size to handle high-DPI displays correctly, mainly for MacOS
         ratio = self.devicePixelRatio()
         glViewport(0, 0, int(self.width() * ratio), int(self.height() * ratio))
+
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
+        glUseProgram(self.shaderProgram)
         #glPolygonMode(GL_FRONT_AND_BACK, self.polygon_mode)
 
-        # QOpenGLWidget on MacOS does not maintain OpenGL data across frames, so we need to re-bind our shader program and vertex arrays every time we draw.
-        if self.shader_id is not None:
-            glUseProgram(self.shader_id)
-        else:
-            raise RuntimeError("Shader program is not initialized. Cannot render without shaders.")
-        
         # Set up transformation matrices (view, projection)
-        aspect = self.width() / self.height() if self.height() > 0 else 1.0
-        projection = glm.perspective(glm.radians(45.0), aspect, 0.1, 100.0)
+        projection = glm.perspective(glm.radians(45.0), self.width() / self.height() if self.height() > 0 else 1.0, 0.1, 2000.0)
         view = glm.lookAt(self.camera.position(), self.camera.target, np.array([0, 1, 0], dtype=np.float32))
-
         
         glUniformMatrix4fv(self.viewLoc, 1, GL_FALSE, glm.value_ptr(view))
         glUniformMatrix4fv(self.projLoc, 1, GL_FALSE, glm.value_ptr(projection))
 
-        #glBindVertexArray(self.sphereVAO)
+        glBindVertexArray(self.sphereVAO)
 
-        # Much code for particles, then: glUniformMatrix4fv(self.modelLoc, 1, GL_FALSE, glm.value_ptr(model))
+        try:
+            for p in self.parent.atom.particles:
+                if p["pos"][0] < 0 and p["pos"][1] > 0: continue #@revisit
+                model: glm.mat4 = glm.translate(glm.mat4(1.0), p["pos"])  # (N, 7) [:3] (x, y, z)
+                glUniformMatrix4fv(self.modelLoc, 1, GL_FALSE, glm.value_ptr(model))
+                glUniform4f(self.colorLoc, *p["color"]) # (N, 7) [3:7] (r, g, b, a)
 
-        glUniform4f(self.colorLoc, 1.0, 0.5, 0.31, 1.0)
-
-        # Bind arrays and draw
-        glBindVertexArray(self.triangle.vao_id)
-        glDrawArrays(GL_TRIANGLES, 0, 3)
+                glDrawArrays(GL_TRIANGLES, 0, self.sphereVertexCount)
+        except Exception as e:
+            print(f"Error during drawing: {e}, line: {e.__traceback__.tb_lineno}")
 
         glBindVertexArray(0) # Unbind the vertex array after drawing
         glUseProgram(0) # Unbind the shader program after drawing
-
-        # Any glViewport or glClear calls should be made in paintGL to ensure they are applied every frame, especially after window resizing.
-
-    def drawSpheres(self, particles):
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        if self.shader_id is not None:
-            glUseProgram(self.shader_id)
-        else:
-            raise RuntimeError("Shader program is not initialized. Cannot render without shaders.")
-        
-        # Set up transformation matrices (view, projection)
-        aspect = self.width() / self.height() if self.height() > 0 else 1.0
-        projection = glm.perspective(glm.radians(45.0), aspect, 0.1, 100.0)
-        view = glm.lookAt(self.camera.position(), self.camera.target, np.array([0, 1, 0], dtype=np.float32))
-
-        glUniformMatrix4fv(self.viewLoc, 1, GL_FALSE, glm.value_ptr(view))
-        glUniformMatrix4fv(self.projLoc, 1, GL_FALSE, glm.value_ptr(projection))
-
-        #glBindVertexArray(self.sphereVAO)
-        # Much code for particles, then: glUniformMatrix4fv(self.modelLoc, 1, GL_FALSE, glm.value_ptr(model))
-        for p in particles:
-            if p.pos.x ==1:pass
-        
