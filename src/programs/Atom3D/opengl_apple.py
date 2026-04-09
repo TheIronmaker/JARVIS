@@ -1,7 +1,6 @@
 
 import math
 import numpy as np
-import ctypes
 
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QCursor, QSurfaceFormat
@@ -42,16 +41,12 @@ class Camera():
         self.lastY = 0.0
     
     def position(self):
-        try:
-            clamped_elevation = np.clip(self.elevation, 0.01, math.pi - 0.01)
-            return np.array([
-                self.radius * math.sin(clamped_elevation) * math.cos(self.azimuth),
-                self.radius * math.cos(clamped_elevation),
-                self.radius * math.sin(clamped_elevation) * math.sin(self.azimuth)],
-                dtype=np.float32)
-        except Exception as e:
-            print(f"Error in position calculation: {e}")
-            return np.array([0.0, 0.0, 0.0], dtype=np.float32)
+        clamped_elevation = np.clip(self.elevation, 0.01, math.pi - 0.01)
+        return np.array([
+            self.radius * math.sin(clamped_elevation) * math.cos(self.azimuth),
+            self.radius * math.cos(clamped_elevation),
+            self.radius * math.sin(clamped_elevation) * math.sin(self.azimuth)],
+            dtype=np.float32)
 
     def update(self):
         self.target = np.zeros(3, dtype=np.float32)
@@ -88,9 +83,11 @@ class Camera():
 
 
 class OpenGLApple(QOpenGLWidget):
-    def __init__(self, parent, vertices:np.float32=None):
+    def __init__(self, parent, vertices:np.float32=None, particles:np.ndarray=None, scale=1.0):
         super().__init__(parent)
         self.parent = parent
+        self.scale = scale
+        self.particles = particles or np.array([], dtype=np.float32)
 
         self.setMouseTracking(True)
         self.vertices = vertices if vertices is not None else self.generate_sphere_vertices()
@@ -107,7 +104,7 @@ class OpenGLApple(QOpenGLWidget):
         self.polygon_mode = GL_FILL
 
         self.camera = Camera(self)
-    
+
     def mouseMoveEvent(self, event):
         self.camera.process_mouse_move(event.position().x(), event.position().y())
         return super().mouseMoveEvent(event)
@@ -132,16 +129,18 @@ class OpenGLApple(QOpenGLWidget):
             r * np.sin(theta) * np.sin(phi)),
             axis=-1).astype(np.float32)
 
-    def generate_sphere_vertices(self, r=0.05, stacks=10, sectors=10):
+    @staticmethod
+    def generate_sphere_vertices(r=0.05, stacks=4, sectors=8) -> np.ndarray:
         phi = np.linspace(0, np.pi, stacks + 1)
         theta = np.linspace(0, 2 * np.pi, sectors + 1)
         phi, theta = np.meshgrid(phi, theta)
-        grid = self.sphericalToCartesian(r, theta, phi)
+        grid = OpenGLApple.sphericalToCartesian(r, theta, phi)
 
         v1, v2, v3, v4 = grid[:-1, :-1], grid[1:, :-1], grid[1:, 1:], grid[:-1, 1:]
         return np.stack([v1, v2, v3, v1, v3, v4], axis=2).flatten()
 
-    def check_shader_compilation_status(self, shader_id):
+    @staticmethod
+    def check_shader_compilation_status(shader_id):
         if not glGetShaderiv(shader_id, GL_COMPILE_STATUS):
             e = glGetShaderInfoLog(shader_id)
             raise RuntimeError(f"Shader compilation failed: {shader_id}\n{e}")
@@ -180,12 +179,9 @@ class OpenGLApple(QOpenGLWidget):
         self.projLoc = glGetUniformLocation(self.shaderProgram, "projection")
         self.colorLoc = glGetUniformLocation(self.shaderProgram, "objectColor")
 
-        # OpenGL shader id's on MacOS do not persist across frames.
-        # Calling glUseProgram ensures the shader is acive and applies changes
-        #glUseProgram(self.shaderProgram)
         # Deleting shaders after use prevents GPU memory leaks
-        #glDeleteShader(vertexShader)
-        #glDeleteShader(fragmentShader)
+        glDeleteShader(vertexShader)
+        glDeleteShader(fragmentShader)
 
     def create_VBOVAO(self, vertices:np.float32, vertexCount=None):
         self.sphereVAO = glGenVertexArrays(1)
@@ -202,12 +198,6 @@ class OpenGLApple(QOpenGLWidget):
         """ Takes vao and vbo IDs and deletes them from OpenGL GPU memory. This prevents memory leaks when creating many new buffers. """
         glDeleteVertexArrays(1, [vao])
         glDeleteBuffers(1, [vbo])
-
-    def resizeGL(self, w, h):
-        # Might be able to remove ratio calculations from paintGL with this method
-        ratio = self.devicePixelRatio()
-        self.window_width = int(w * ratio)
-        self.window_height = int(h * ratio)
 
     def paintGL(self): # drawSpheres
         """
@@ -235,9 +225,10 @@ class OpenGLApple(QOpenGLWidget):
         glBindVertexArray(self.sphereVAO)
 
         try:
-            for p in self.parent.atom.particles:
-                if p["pos"][0] < 0 and p["pos"][1] > 0: continue #@revisit
+            for p in self.particles:
+                # if p["pos"][0] < 0 and p["pos"][1] > 0: continue # Example of how to skip drawing certain areas
                 model: glm.mat4 = glm.translate(glm.mat4(1.0), p["pos"])  # (N, 7) [:3] (x, y, z)
+                model = glm.scale(model, glm.vec3(self.scale))
                 glUniformMatrix4fv(self.modelLoc, 1, GL_FALSE, glm.value_ptr(model))
                 glUniform4f(self.colorLoc, *p["color"]) # (N, 7) [3:7] (r, g, b, a)
 
@@ -247,3 +238,31 @@ class OpenGLApple(QOpenGLWidget):
 
         glBindVertexArray(0) # Unbind the vertex array after drawing
         glUseProgram(0) # Unbind the shader program after drawing
+
+if __name__ == "__main__":
+    def test_openGL():
+        import sys
+        set_QSurfaceFormat()
+        app = QApplication(sys.argv)
+        window = OpenGLApple(None)
+        window.particles = np.array([([25, 10, 0.0], [1.0, 1.0, 0.0, 1.0], [0.0, 0.0, 0.0])], dtype=[('pos', 'f4', (3,)), ('color', 'f4', (4,)), ('vel', 'f4', (3,))])
+
+        window.resize(800, 600)
+        window.show()
+        sys.exit(app.exec())
+    
+    def test_sphere_vertices():
+        import matplotlib.pyplot as plt
+        vertices = OpenGLApple.generate_sphere_vertices(r=0.05, stacks=4, sectors=8)
+        x, y, z = vertices.reshape(-1, 3).T
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.set_box_aspect([1,1,1])
+        ax.scatter(x, y, z, c='blue', s=20)
+        ax.set_xlabel('X')
+        ax.set_ylabel('Y')
+        ax.set_zlabel('Z')
+        plt.title("Generated Sphere Vertices")
+        plt.show()
+    
+    test_sphere_vertices()

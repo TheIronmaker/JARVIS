@@ -1,6 +1,8 @@
 # shapes.py
 import ctypes
 import numpy as np
+import math
+import time
 
 from OpenGL.GL import *
 
@@ -47,3 +49,50 @@ class Triangle:
         #  enable and bind this attribute (will be inPosition in the shader)
         glEnableVertexAttribArray(1)
         glBindVertexArray(0)
+
+
+class GenSphere:
+    def run_test(self, num):
+        st = time.time()
+        for _ in range(num):
+            sphere = self.generate_sphere_vertices_manual()
+        et = time.time()
+        return (et - st) / num, sphere
+
+    @staticmethod
+    def graph(particles):
+        import matplotlib.pyplot as plt
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.set_box_aspect([1, 1, 1])
+        ax.scatter(particles[0::3], particles[1::3], particles[2::3], s=1)
+        plt.show()
+    
+    @staticmethod
+    def generate_sphere_vertices_manual(r=0.05, stacks=10, sectors=10):
+        vertices_size = stacks * sectors * 6
+        vertices = np.zeros((vertices_size, 3), dtype=np.float32)
+        # List version: vertices = []
+
+        counter = 0
+        for i in range(stacks):
+            t1 = i / stacks * math.pi
+            t2 = (i+1) / stacks * math.pi
+            for j in range(sectors):
+                p1 = j / sectors * 2 * math.pi
+                p2 = (j+1) / sectors * 2 * math.pi
+
+                def getPos(t, p):
+                    return [
+                        r * math.sin(t) * math.cos(p),
+                        r * math.cos(t),
+                        r * math.sin(t) * math.sin(p)]
+
+                v1, v2, v3, v4 = getPos(t1, p1), getPos(t2, p1), getPos(t2, p2), getPos(t1, p2)
+                vertices[counter:counter+6] = [v1, v2, v3, v2, v4, v3]
+                counter += 6
+                # For list version: generally slower than a preallocated numpy array
+                # vertices.extend(v1 + v2 + v3)
+                # vertices.extend(v2 + v4 + v3)
+        
+        return vertices.flatten()

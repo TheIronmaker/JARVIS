@@ -2,7 +2,6 @@
 
 # System imports
 import numpy as np
-import matplotlib.pyplot as plt
 import math
 
 class Atom:
@@ -15,8 +14,23 @@ class Atom:
 
         self.a0 = 1.0
         self.electron_r = config['electron_r']
+        self.hbar = 1
+        self.m_e = 1
+        self.dt = 0.5
         
-        self.particles = np.zeros((self.N, 6), dtype=np.float32)
+        self.particles = np.zeros((self.N), dtype=[('pos', 'f4', (3,)), ('color', 'f4', (4,)), ('vel', 'f4', (3,))])
+
+    def get_orbitals(self):
+        return self.n, self.l, self.m, self.N, self.electron_r
+
+    def set_orbitals(self, n, l, m, N=None, electron_r=None):
+        """ Update orbital parameters and regenerate particles. """
+        self.n = n
+        self.l = l
+        self.m = m
+        self.N = N if N is not None else self.N
+        self.electron_r = electron_r if electron_r is not None else self.electron_r
+        self.generateParticles()
 
     def sphericalToCartesian(self, r:np.ndarray, theta:np.ndarray, phi:np.ndarray) -> np.ndarray:
         """
@@ -116,27 +130,20 @@ class Atom:
     def samplePhi(self) -> np.ndarray:
         rng = np.random.default_rng()
         return 2 * math.pi * rng.random(size=self.N, dtype=np.float32)
-    
-    def calculateProbabilityFlow(self):
-        r = np.linalg.norm(self.pos, axis=1, keepdims=True)
-        mask = (r > 1e-6).flatten()
 
     def heatmap_fire(self, values) -> np.ndarray:
         values = np.clip(values, 0.0, 1.0)
 
         colors = np.array([
-                [0.0, 0.0, 0.0, 0.0, 1],  # 0.0 Black
-                [0.2, 0.5, 0.0, 0.99, 1], # 0.2 Dark Purple
-                [0.4, 0.8, 0.0, 0.0, 1],  # 0.4 Deep Red
-                [0.6, 1.0, 0.5, 0.0, 1],  # 0.6 Orange
-                [0.8, 1.0, 1.0, 0.0, 1],  # 0.8 Yellow
-                [1.0, 1.0, 1.0, 1.0, 1]]) # 1.0 White
-        
-        return np.column_stack([np.interp(
-            values,
-            colors[:, 0],
-            colors[:, i]
-            ) for i in range(1, 5)])
+                [0.0, 0.0, 0.0, 1],  # 0.0 Black
+                [0.5, 0.0, 0.99, 1], # 0.2 Dark Purple
+                [0.8, 0.0, 0.0, 1],  # 0.4 Deep Red
+                [1.0, 0.5, 0.0, 1],  # 0.6 Orange
+                [1.0, 1.0, 0.0, 1],  # 0.8 Yellow
+                [1.0, 1.0, 1.0, 1]]) # 1.0 White
+
+        id = [(i)/5 for i in range(0, 6)]
+        return np.column_stack([np.interp(values, id, colors[:, i]) for i in range(0, 4)])
 
     def inferno(self, r, theta, phi) -> np.ndarray:
         """ Colorization for particles using array based calculations """
@@ -191,10 +198,11 @@ class Atom:
         # May add config values for scaling
         return self.heatmap_fire(intensity * 1.5 * 5**n)
 
-    def generateParticles(self):
+    def generateParticles(self, N=None):
         n = self.n
         l = self.l
         a0 = self.a0
+        if N: self.N = N
 
         self.norm = (2/(n*a0))**3 * math.factorial(n-l-1) / (2*n*math.factorial(n+l))
         
@@ -209,14 +217,40 @@ class Atom:
         r = np.linalg.norm(pos, axis=1)
         theta = np.arccos(np.clip(pos[:, 1] / r, -1.0, 1.0)) # avoids division by zero and ensures valid input for arccos
         phi = np.arctan2(pos[:, 2], pos[:, 0])
-        self.col = self.inferno(r, theta, phi)
-        self.pos = pos.astype(np.float32) # shape (N,) with fields 'pos' and 'color'
 
-        self.particles = np.zeros((self.N), dtype=[('pos', 'f4', (3,)), ('color', 'f4', (4,))])
+        self.particles = np.zeros((self.N), dtype=[('pos', 'f4', (3,)), ('color', 'f4', (4,)), ('vel', 'f4', (3,))])
         self.particles['pos'] = pos
-        self.particles['color'] = self.col
+        self.particles['color'] = self.inferno(r, theta, phi)
+        self.particles['vel'] = np.zeros((self.N, 3), dtype=np.float32)
+    
+    def calculateProbabilityFlow(self, particles) -> np.ndarray:
+        r = np.linalg.norm(particles, axis=1).clip(1e-6, None)
+        theta = np.arccos(particles[:, 1] / r)
+        phi = np.arctan2(particles[:, 2], particles[:, 0])
+
+        sinTheta = np.sin(theta)
+        if np.any(np.abs(sinTheta) < 1e-4): sinTheta = np.clip(sinTheta, 1e-4, None)
+        v_mag = self.hbar * self.m / (self.m_e * r * sinTheta)
+
+        vx = -v_mag * np.sin(phi)
+        vy = np.zeros(phi.shape, dtype=np.float32)
+        vz = v_mag * np.cos(phi)
+
+        return np.column_stack([vx, vy, vz])
+
+    def updateVelocities(self):
+        r = np.linalg.norm(self.particles['pos'], axis=1).clip(1e-6, None)
+        theta = np.arccos(self.particles['pos'][:, 1] / r)
+
+        self.particles['vel'] = self.calculateProbabilityFlow(self.particles['pos'])
+        temp_pos = self.particles['pos'] + self.particles['vel'] * self.dt
+        new_phi = np.arctan2(temp_pos[:, 2], temp_pos[:, 0])
+        self.particles["pos"] = self.sphericalToCartesian(r, theta, new_phi)
+
+        return self.particles
 
 if __name__ == "__main__":
+    import matplotlib.pyplot as plt
     config = {
         "orbital": {"n": 3, "l": 2, "m": 1, "N": 10000},
         "electron_r": 1
@@ -225,8 +259,8 @@ if __name__ == "__main__":
     atom = Atom(config)
     atom.generateParticles()
 
-    x, y, z = atom.pos[:, 0], atom.pos[:, 1], atom.pos[:, 2]
-    colors = atom.particles[:, 3:6]
+    x, y, z = atom.particles['pos'].T
+    colors = atom.particles['color']
     fig = plt.figure()
     ax = fig.add_subplot(111, projection='3d')
     ax.scatter(x, y, z, c=colors, s=20) 

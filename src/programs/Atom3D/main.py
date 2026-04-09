@@ -21,7 +21,7 @@ import atexit
 import traceback
 
 # PySide6 imports
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import QApplication, QMainWindow
 
 # Local imports
@@ -33,7 +33,7 @@ set_QSurfaceFormat()
 
 # N to equal 100000
 config = {
-    "orbital": {"n": 4, "l": 2, "m": 0, "N": 10000},
+    "orbital": {"n": 3, "l": 2, "m": 1, "N": 10000},
     "electron_r": 1.5
 }
 
@@ -47,7 +47,20 @@ class MainWindow(QMainWindow):
 
         self.opengl_widget = OpenGLApple(self)
         self.setCentralWidget(self.opengl_widget)
-    
+
+        self.timer = QTimer(self, interval=16) # 16ms = ~60 FPS
+        self.timer.timeout.connect(self.update)
+        self.timer.start()
+
+    def update(self):
+        self.opengl_widget.particles = self.atom.updateVelocities()
+        self.opengl_widget.update()
+        super().update()
+
+    def close(self):
+        self.timer.stop()
+        super().close()
+
     def keyPressEvent(self, event) -> None:
         """
         Handles keyboard press events.
@@ -55,64 +68,44 @@ class MainWindow(QMainWindow):
         Args:
             event: The QKeyEvent object containing information about the key press.
         """
-
-        atom = self.atom
+        n, l, m, N, electron_r = self.atom.get_orbitals()
 
         key = event.key()
         if key == Qt.Key_Escape:
             self.close()
 
-        # Keybinds
         elif key == Qt.Key_W:
-            atom.n += 1
-            atom.generateParticles()
-            
+            n += 1
         elif key == Qt.Key_S:
-            atom.n -= 1
-            if atom.n < 1:
-                atom.n = 1
-            atom.generateParticles()
-
+            n -= 1
+            if n < 1: n = 1
         elif key == Qt.Key_E:
-            atom.l += 1
-            atom.generateParticles()
-        
+            l += 1
         elif key == Qt.Key_D:
-            atom.l -= 1
-            if atom.l < 0:
-                atom.l = 0
-            atom.generateParticles()
-        
+            l -= 1
+            if l < 0: l = 0
         elif key == Qt.Key_R:
-            atom.m += 1
-            atom.generateParticles()
-        
+            m += 1
         elif key == Qt.Key_F:
-            atom.m -= 1
-            atom.generateParticles()
-        
+            m -= 1
         elif key == Qt.Key_T:
-            atom.N += 100000
-            atom.generateParticles()
-        
+            N += 10000
         elif key == Qt.Key_G:
-            atom.N -= 100000
-            atom.generateParticles()
+            N -= 10000
 
         # Clamp orbital values to valid ranges
-        if atom.l > atom.n - 1:
-            atom.l = atom.n - 1
-        if atom.l < 0:
-            atom.l = 0
-        if atom.m > atom.l:
-            atom.m = atom.l
-        if atom.m < -atom.l:
-            atom.m = -atom.l
+        if n < 1: n = 1
+        if l > n - 1: l = n - 1
+        if l < 0: l = 0
+        if m > l: m = l
+        if m < -l: m = -l
+        if N <= 0: N = 10000
 
-        electron_r = float(atom.n) / 3.0
+        electron_r = float(n) / 3.0
+        self.atom.set_orbitals(n, l, m, N, electron_r)
+        print(f"Quantum numbers updated: n={n}, l={l}, m={m}, N={N}")
 
         self.update()
-        # self.opengl_widget.update() #Maybe?
         super().keyPressEvent(event)
 
 class DebugApplication(QApplication):
@@ -155,10 +148,10 @@ def app(*args):
     sys.exit(app.exec())
 
 @atexit.register
-def clear_terminal(ask=None):
-    if (input("Press Enter to clear terminal... ") if ask is None else "") == "":
+def clear_terminal(ask=None, message="Exiting Atom Simulator...\n\n(Press Enter to clear terminal)\n"):
+    if (input(message) if ask is None else "") == "":
         os.system('cls' if os.name == 'nt' else 'clear\nclear')
 
 if __name__ == "__main__":
-    clear_terminal(ask=True)
+    clear_terminal(ask=True, message="Starting Atom Simulator...")
     app()
