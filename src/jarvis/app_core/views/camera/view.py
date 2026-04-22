@@ -2,8 +2,6 @@ from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt
 
-import numpy as np
-
 from jarvis.utils.helpers.img import round_pixmap, get_frame
 from jarvis.app_core.gui_elements import ButtonStack
 

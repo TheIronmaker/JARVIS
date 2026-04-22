@@ -22,7 +22,7 @@ class ViewManager(NodeManager):
         # Create Manager Attributes - restrict this from running if GUI does not show it (dynammic loading of views as needed)
         super().__init__()
         self.initialize(self.classes, package=[parent])
-        self.build = PathResolver.load_file("view_main", ".json", "project", "configs/managers/views")
+        self.build = PathResolver.load_file(config["manager"], ".json", "project", "configs/managers/views")
         self.load_structs(default_dir=("settings", VIEWS_DIR))
 
         # Setup Views
@@ -89,3 +89,7 @@ class ViewManager(NodeManager):
                     view.poll()
             except Exception:
                 Logger.warning(f"Unable to update {name} view. Full error: {traceback.format_exc()}")
+
+    def keyPressEvent(self, event):
+        for view in self.nodes.values():
+            view.keyPressEvent(event)

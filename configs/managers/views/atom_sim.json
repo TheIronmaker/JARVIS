@@ -1,9 +1,25 @@
 {
 "instances": [
     {
-        "type": "atom_sim",
+        "type": "OpenGL_render",
         "name": "atom_sim",
         "enabled": true
+    },
+    {
+        "type": "camera",
+        "name": "camera",
+        "enabled": true,
+        "settings": {
+            "frame_links": ["camera"]
+        }
+    },
+    {
+        "type": "hand_tracker",
+        "name": "hand_tracker",
+        "enabled": true,
+        "settings": {
+            "frame_links": ["hand_tracker"]
+        }
     }
 ]
 }

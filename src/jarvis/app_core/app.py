@@ -5,7 +5,6 @@ from PySide6.QtGui import QPainter
 from PySide6.QtCore import Qt, QTimer
 
 from jarvis.app_core.view_manager import ViewManager
-from jarvis.utils.services.json_processor import load_json
 from jarvis.utils.services.path_resolver import PathResolver
 
 BUILDS_DATA = PathResolver.load_file("app_main", ".json", "project", "configs/apps")
@@ -73,8 +72,15 @@ class MainWindow(QMainWindow):
         with QPainter(self) as painter:
             for view_manager in self.view_managers.values():
                 view_manager.paint_views(event, painter)
+    
+    def keyPressEvent(self, event):
+        for view_manager in self.view_managers.values():
+            view_manager.keyPressEvent(event)
 
 def app(*args):
+    from jarvis.app_core.views.gl_render import PS6
+    PS6.set_QSurfaceFormat()
+
     app = QApplication(sys.argv)
     window = MainWindow(*args)
     window.resize(1200, 800)

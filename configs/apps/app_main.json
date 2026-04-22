@@ -3,12 +3,14 @@
     {
         "type": "view_manager",
         "name": "central_command",
-        "enabled": true
+        "manager": "view_main",
+        "enabled": false
     },
     {
         "type": "view_manager",
         "name": "atom_sim",
-        "enabled": false
+        "manager": "atom_sim",
+        "enabled": true
     }
 ]
 }

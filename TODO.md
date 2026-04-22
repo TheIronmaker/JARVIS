@@ -10,6 +10,7 @@ ID system for devices / modules instead of naming (or importlib - look into this
 ## Settings Loading
 Look into `pydantic`
 Define a scheme class and validation step
+Eliminate need for NodeManager with better loading services
 
 ## Sub-Pub
 Could use a thread pool instead of callback execution
