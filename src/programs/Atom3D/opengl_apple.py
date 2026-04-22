@@ -31,7 +31,7 @@ class Camera():
         self.elevation = math.pi / 2.0
         self.orbit_speed = 0.01
         self.pan_speed = 0.01
-        self.zoom_speed = 0.1
+        self.zoom_speed = 10
         
         self.lock_pos = None
         self.dragging = False

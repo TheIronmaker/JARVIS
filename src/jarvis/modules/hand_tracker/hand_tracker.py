@@ -30,7 +30,6 @@ class HandTrackerNode:
         self.results = None
         self.array = np.zeros((21, 3))
         self.math = Math(self)
-
         self.link_camera(self.settings.get("frame_links", []))
 
     def relink(self, links:list):
@@ -55,7 +54,7 @@ class HandTrackerNode:
         # Handle Math
         self.math.data["global"] = self.get_coordinates()
         if self.settings["data_smoothing"]["enabled"]:
-            self.math.SD.next(self.math.data["global"], update=True)
+            self.math.data["global_SD"] = self.math.SD.next(self.math.data["global"], update=True)
         
         self.math.calc_local()
         self.math.calc_cartesian()
