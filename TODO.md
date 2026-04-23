@@ -1,9 +1,5 @@
-# Application
-## app_core
-Boot loader that checks for if the selected "build.json" works. Ability to view and select different builds from the boot loader, and then it loads them with the ability to set the default build.
-Dynamic GUI constructor
-
 # Core
+## Module Loading (Very important)
 importlib for loading modules, instead of storing each class in the manager class.
 ID system for devices / modules instead of naming (or importlib - look into this)
 
@@ -19,6 +15,7 @@ Consider a prefix tree (trie) for special lookups. E.g. ""
 
 ## Fingers
 Redo calculations for finger angles with a dedicated function for a single finger
+
 Render inverse kinematics in new graph
 
 ## Logging:
@@ -27,7 +24,9 @@ Logging should have actual log file
 Logging should have verbose version
 Logging should have calling setting for verbose level/where the message goes. To screen log, just text, or only internal logs (again, what level of internal logs?)
 
-## UI
+# Application
+## App Core: UI
+Dynamic GUI constructor
 Example format:
 ``` JSON
 {
