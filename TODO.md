@@ -8,11 +8,6 @@ Look into `pydantic`
 Define a scheme class and validation step
 Eliminate need for NodeManager with better loading services
 
-## Sub-Pub
-Could use a thread pool instead of callback execution
-Consider a prefix tree (trie) for special lookups. E.g. ""
-
-
 ## Fingers
 Redo calculations for finger angles with a dedicated function for a single finger
 

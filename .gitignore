@@ -3,7 +3,7 @@
 # -------------------------
 
 # Metadata
-.DS_Store
+*.DS_Store
 
 # Editable install metadata
 *.egg-info/
@@ -35,3 +35,5 @@ private_tests/
 # Config data
 configs.example/
 !configs.example/
+
+*CURRENT_TASK.md
