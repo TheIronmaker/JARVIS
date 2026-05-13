@@ -7,7 +7,7 @@ name = "jarvis"
 version = "0.1.3"
 description = "JARVIS Modular Control System"
 authors = [{name = "Andy"}]
-readme = README.md
+readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.11"
 
@@ -18,14 +18,19 @@ dependencies = [
 ui = [
     "PySide6"
 ]
+open_gl = [
+    "PyOpenGL",
+    "glm"
+]
 ai_tracking = [
-    "mediapipe"
+    "mediapipe",
+    "opencv-python"
 ]
 raspi = [
     "adafruit-circuitpython-servokit"
 ]
 all = [
-    "jarvis[ui,ai_tracking,raspi]"
+    "jarvis[ui,ai_tracking,raspi,platformdirs]"
 ]
 
 classifiers = [
