@@ -32,7 +32,7 @@ class PS6():
         format.setSamples(4) # Request 4x multisampling for anti-aliasing
         format.setMajorVersion(4) # Request OpenGL version 4.1 as the highest supported version by macOS
         format.setMinorVersion(1)
-        format.setProfile(QSurfaceFormat.CoreProfile) # Request a Core Profile context, which removes deprecated features
+        format.setProfile(QSurfaceFormat.CoreProfile) # Request a Core Profile context, to remove deprecated features
         format.setDepthBufferSize(24) # Request a 24-bit depth buffer for better z-depth precision
 
         # Set default format for all QSurface instances (QOpenGLWidget, QOpenGLWindow, etc.)
@@ -205,6 +205,7 @@ class OpenGL_render(QOpenGLWidget):
     def close(self):
         self.timer.stop()
         super().close()
+        self.parent.close()
 
     def hand_poll(self, data):
         top = data[8] - data[4]
@@ -320,7 +321,8 @@ class OpenGL_render(QOpenGLWidget):
     def paintGL(self): # drawSpheres
         """
         Main rendering loop called to redraw window. All drawing commands should be issued here.
-        Any glViewport or glClear calls should be made in paintGL to ensure they are applied every frame, especially after window resizing.
+        Any glViewport or glClear calls should be made in paintGL to ensure they are applied every frame,
+        especially after window resizing.
         """
         self.makeCurrent()
         glClearColor(9/255, 14/255, 22/255, 1.0)
@@ -334,7 +336,8 @@ class OpenGL_render(QOpenGLWidget):
         #glPolygonMode(GL_FRONT_AND_BACK, self.polygon_mode)
 
         # Set up transformation matrices (view, projection)
-        projection = glm.perspective(glm.radians(45.0), self.width() / self.height() if self.height() > 0 else 1.0, 0.1, 2000.0)
+        projection = glm.perspective(glm.radians(45.0),
+                                     self.width() / self.height() if self.height() > 0 else 1.0, 0.1, 2000.0)
         view = glm.lookAt(self.camera.position(), self.camera.target, np.array([0, 1, 0], dtype=np.float32))
         
         glUniformMatrix4fv(self.viewLoc, 1, GL_FALSE, glm.value_ptr(view))

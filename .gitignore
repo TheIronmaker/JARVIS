@@ -12,8 +12,9 @@
 venv/
 .venv/
 build/
-# For Mediapipe library for hand tracking:
-venv311/
+
+# Mediapipe datasets
+*.task
 
 # IDE settings folders
 .vscode/

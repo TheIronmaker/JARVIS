@@ -1,5 +1,6 @@
 from jarvis.core.logger.setup import setup_logger
 
+# Pretty sure this can be eliminated. Just swiching to numpy and using built in mapping and validation.
 
 class KinematicsValidators:
     def __init__(self, id: int = None):
@@ -32,6 +33,21 @@ class KinematicsValidators:
             if not (0 <= value <= 360):
                 self.log.warning(f"Angle beyond typical range (0-360): {value}\nRecommendation: Double check the final value is sufficient.")
 
+    def list_to_dict(self, values: dict[str, float] | list[float | int], format: str):
+        if isinstance(values, list):
+            if len(values) == len(format):
+                values = dict(zip(format, values))
+            else:
+                self.log.error(f"Value list length {len(values)} does not match expected length {len(format)}\n"
+                               f"Recommendation: Provide a full list of values matching the expected format: {format}")
+        return values
+
+    def ensure_int_or_float(self, values: dict[str, float]):
+        if not all(isinstance(v, (int, float)) for v in values.values()):
+            self.log.error(f"All values must be numbers: {values}\nRecommendation: Use numbers for all values.")
+            return False
+        return True
+
     def positions(self, positions: dict[str, float] | list[float | int], possible_names: list[str]=['x', 'y', 'z']):
 
         if isinstance(positions, list):
@@ -55,8 +71,15 @@ class KinematicsValidators:
             if value < 0:
                 self.log.warning(f"Negative length value: {value}\nRecommendation: Use a positive number for the length value.")
 
-
+    # Forgot what keys were for
+    def keys(self, keys: dict[str, str] | list[str], existing_keys: dict[str]):
+        if isinstance(keys, list):
+            if len(keys) != len(self.pos_format):
+                self.log.error(f"Key list length {len(keys)} does not match expected length {len(self.pos_format)}\n"
+                               f"Recommendation: Provide a list of keys matching the expected format: {self.pos_format}")
+                return False
+            existing_keys = {name: key for name, key in zip(self.pos_format, keys)}
 
 cls = KinematicsValidators()
 #cls.log.warning(cls.get_message("missing position format", value="abc") + "\nRecommendation: " + cls.rec["missing position format"].format(possible_formats="xyz, zyx, xzy"))
-cls.format("abc", possible_formats=["xyz", "zyx", "xzy"], format_type="Position")
+#cls.format("abc", possible_formats=["xyz", "zyx", "xzy"], format_type="Position")
