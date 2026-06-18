@@ -5,24 +5,20 @@
 # Metadata
 *.DS_Store
 
-# Editable install metadata
-*.egg-info/
-
-# Virtual environment
-venv/
-.venv/
-build/
-
-# Mediapipe datasets
-*.task
-
 # IDE settings folders
 .vscode/
 .idea/
 
-# Build artifacts
+# Building/Virtual Environments
+venv/
+.venv/
+build/
+**/__pycache__
+*.egg-info/
 *.py[cod]
 
+# Mediapipe datasets
+*.task
 
 # -------------------------
 # Unique to this project
