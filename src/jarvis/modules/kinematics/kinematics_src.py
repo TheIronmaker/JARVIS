@@ -1,91 +1,99 @@
 # Modules
 import numpy as np
 import sympy as sp
+from mpl_toolkits.mplot3d.art3d import Line3D
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
 # System Modules
 from matricies import dh_matrix
 
+PI = np.pi
 
-def display_3D(pos, rot, colors=None):
-    fig = plt.figure()
-    ax = fig.add_subplot(111, projection='3d')
-    ax.set_aspect('equal', adjustable='box')
+class Display:
+    def __init__(self, robot):
+        self.robot = robot
 
-    qs = [ax.quiver(
-        *pos,
-        *rot,
-        length=1,
-        normalize=True,
-        color=colors[i],
-        linewidth=2,
-        pivot='tail')
-        for i in range(3)]
+        self.fig = plt.figure()
+        self.ax = self.fig.add_subplot(111, projection="3d")
+        self.ax.set_aspect('equal', adjustable='box')
 
-    slider_axs = [plt.axes([0.2, 0.1*(i+1)/2, 0.6, 0.03]) for i in range(3)]
+        self.ax.set_xlim3d([-20, 20])
+        self.ax.set_ylim3d([-20, 20])
+        self.ax.set_zlim3d([-20, 20])
+        self.ax.set_xlabel('X')
+        self.ax.set_ylabel('Y')
+        self.ax.set_zlabel('Z')
 
-    sliders = [Slider(
-        ax=slider_axs[i],
-        label=f"Theta {i}",
-        valmin=-2*3.14,
-        valmax=2*3.14
-    ) for i in range(3)]
+        self.line, = self.ax.plot([], [], [], 'o-', lw=4, color='teal')
 
-    def update(val):
-        for i, sym in enumerate([theta1, theta2, theta3]):
-            angles[sym] = sliders[i].val
+        self.sliders = []
+        for i in range(3):
+            self.make_slider(i)
         
-        x, y, z = get_position(T03, angles)
-        for q in qs:
-            q.set_offsets(np.column_stack((x, y, z)))
+        self.update(None) # Draw extra first frame to initialize
 
-        fig.canvas.draw_idle()
+    def make_slider(self, index):
+        y_pos = 0.05 + index * 0.05
 
-    for slider in sliders:
-        slider.on_changed(update)
+        slider_ax = self.fig.add_axes([0.2, y_pos, 0.6, 0.03])
+        slider = Slider(
+            ax=slider_ax,
+            label=f"Theta {index + 1}",
+            valmin=-2*PI,
+            valmax=2*PI,
+            valinit=0.0
+        )
+        slider.on_changed(self.update)
+        self.sliders.append(slider)
+    
+    def update(self, val):
+        slider_values = [s.val for s in self.sliders]
+        T_matrices = self.robot.solve_exact(slider_values)
 
-    # Label axes and title
-    ax.set_xlabel('X-axis')
-    ax.set_ylabel('Y-axis')
-    ax.set_zlabel('Z-axis')
-    ax.set_title('3D Surface Plot')
+        # Line goes from global (0, 0, 0) to the end affector
+        # The 4th column of each T matrix is a tranlation vector
+        # Broken with sympy matrix return
+        x = [0, T_matrices[0, 3]]
+        y = [0, T_matrices[1, 3]]
+        z = [0, T_matrices[2, 3]]
 
+        self.line.set_data(np.array(x), np.array(y))
+        self.line.set_3d_properties(np.array(z))
+        self.fig.canvas.draw_idle()
+        
+
+class FK_3DOF:
+    def __init__(self):
+        """Forward Kinematic Solver.
+
+        Methods:
+            solve_fast(slider_values):
+                Optimizes Function for faster, less precise floating values.
+            solve_exact(slider_values, format='numpy'):
+                Calculates decimal points for a more precise result.
+                Returns sympy or numpy matrix
+        """
+
+        self.sym = {f'theta{i}': sp.symbols(f'theta{i}') for i in range(1,4)}
+
+        # Create DH Matrices (Chain Links) for Forward Kinematics
+        self.T01 = dh_matrix(a=2,  d=0, alpha=sp.pi/2, theta=self.sym['theta1'])
+        self.T12 = dh_matrix(a=10, d=0, alpha=0, theta=self.sym['theta2'])
+        self.T23 = dh_matrix(a=8,  d=0, alpha=0, theta=self.sym['theta3'])
+        self.T03 = self.T01 @ self.T12 @ self.T23 # Chain by multiplication
+
+        self.calc_fast = sp.lambdify(([v for v in self.sym.values()]), self.T03, 'numpy')
+
+    def solve_fast(self, values:list):
+        return self.calc_fast(*values)
+
+    def solve_exact(self, values:list, format:str='numpy', dtype=float):
+        matrix = self.T03.subs({val: values[i] for i, val in enumerate(self.sym)})
+        return np.array(matrix, dtype=dtype) if format=='numpy' else matrix
+
+
+if __name__ == "__main__":
+    robot = FK_3DOF()
+    app = Display(robot)
     plt.show()
-
-
-""" Working with DH principles, and not Screw Theory / PoE (Product of Exponentials) """
-
-# The position (X, Y, Z) is in the top right corner of the matrix, and is a 3x1 vector
-#foot_pos = [v.evalf(5) for v in list((T03[:3, 3].subs(angles)))]
-def get_position(T03, angles):
-    return [float(i) for i in [v.evalf(5)
-        for v in list(
-        (T03[:3, 3].subs(angles))
-    )]]
-
-def get_position_compact(T03, angles): return [float(i) for i in [v.evalf(5) for v in list((T03[:3, 3].subs(angles)))]]
-
-# The rotation of the foot is in the top left 3x3 submatrix of T03
-#foot_rot = T03[:3, :3]
-def get_rot(T03, angles):
-    pass
-
-# Servo Angles
-theta1, theta2, theta3 = sp.symbols('theta1 theta2 theta3')
-angles = {theta1: 0, theta2: sp.pi/4, theta3: -sp.pi/4}
-
-# Create DH Matrices (Chain Links) for Forward Kinematics
-T01 = dh_matrix(a=2,  d=0, alpha=sp.pi/2, theta=theta1)
-T12 = dh_matrix(a=10, d=0, alpha=0, theta=theta2)
-T23 = dh_matrix(a=8,  d=0, alpha=0, theta=theta3)
-T03 = T01 @ T12 @ T23 # Chain by multiplication
-
-# Angles to Positions
-foot_pos = get_position(T03, angles)
-foot_rot = get_rot(T03, angles)
-
-display_3D(foot_pos,
-           np.eye(3), # Foot rot - future
-           ['red', 'green', 'blue'])
-
