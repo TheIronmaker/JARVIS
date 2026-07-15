@@ -26,6 +26,7 @@ build/
 
 # Random Files/Folders
 private_tests/
+workspace.md
 *temp.py
 *test.py
 
