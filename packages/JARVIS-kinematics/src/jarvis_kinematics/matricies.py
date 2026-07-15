@@ -2,6 +2,7 @@ import numpy as np
 import sympy as sp
 from functools import reduce
 
+PI = np.pi
 
 class Operations2D:
     @staticmethod

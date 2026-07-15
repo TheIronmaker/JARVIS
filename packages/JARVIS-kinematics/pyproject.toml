@@ -3,12 +3,19 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "jarvis-core"
+name = "jarvis-kinematics"
 version = "0.1.0"
 license = { text = "Apache-2.0" } 
+
 dependencies = [
-    "pyzmq"
+    "jarvis-core",
+    "sympy",
+    "matplotlib",
+    "numpy"
 ]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.uv.sources]
+jarvis-kinematics = { workspace = true }

@@ -4,10 +4,8 @@ import sympy as sp
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
-# System Modules
-from matricies import dh_matrix
-
-PI = np.pi
+from jarvis_kinematics.matricies import dh_matrix, PI
+from jarvis_core.databus import pub
 
 class Display:
     def __init__(self, robot):
