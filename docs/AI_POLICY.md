@@ -9,7 +9,7 @@ His Majesty reserves the sovereign right to personally audit any contribution. S
 
 ### III. The Doctrine of Understanding
 Every contributor must possess a total, foundational understanding of their work.
-- **The Test of Clarity:** You must be able to provide a plain-speech explanation for every function and variable. You have the right to speak in the commoners tough, or of the elect dialect, whichever you prefer.
+- **The Test of Clarity:** You must be able to provide a plain-speech explanation for every function and variable. You have the right to speak in the commoners tougue, or of the elect dialect, whichever you prefer.
 - **The Crime of "Brain Rot":** To submit code that you do not understand is a crime of highest degree. Those found guilty shall have their contributions banished from the Kingdom.
 - **The Path of Redemption:** A banished contributor may, at the King's mercy, be allowed to re-submit their work—provided they have gained the wisdom to explain it.
 
@@ -25,6 +25,6 @@ Every contributor must possess a total, foundational understanding of their work
 ## The King’s Personal Covenant
 While the King strives to rely on his own intellect to forge core logic, rather than the dark wizardry of the blackened tongue, he acknowledges that AI sorcery may be harnessed and controlled by rebirth and enlightenment of the programmers mind. It may be put to use as a helpful squire for mundane tasks, rather than rely on the dark secrets of vibe-code brain rot.
 
-To lead by example, His Majesty follows these protocols with utmost conviction and determination, including this very document. His majesty himself has created this document with the assistance of an AI scribe. While the king understands and may articulate in full that which this document contains, while burdened by numerous responsibilities, it was in the kings best interest to let his faithful AI scribe make his own insertions and additions, while maintaining the spirit and wisdom of the king. The king writes this section himself, and has reviews and changed aspects of the scribes draft.
+To lead by example, His Majesty follows these protocols with utmost conviction and determination, including this very document. His majesty himself has created this document with the assistance of an AI scribe. While the king understands and may articulate in full that which this document contains, while burdened by numerous responsibilities, it was in the kings best interest to let his faithful AI scribe make his own insertions and additions, while maintaining the spirit and wisdom of the king. The king writes this section himself, and has reviewed and modified aspects of the scribes draft.
 
-# The King's final seal of Authority: "Let every line be written with intent, and every function be guided by reason. Let wisdom and knowledge follow those of the kingdom."
+## The King's final seal of Authority: "Let every line be written with intent, and every function be guided by reason. Let wisdom and knowledge follow those of the kingdom."
