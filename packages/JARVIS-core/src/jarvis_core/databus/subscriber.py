@@ -1,4 +1,5 @@
 import zmq
+import msgpack
 import json
 import numpy as np
 
@@ -6,36 +7,38 @@ class Subscriber:
     def __init__(self, channel:str=""):
         self.context = zmq.Context()
         self.socket = self.context.socket(zmq.SUB)
-        self.socket.bind("tcp://*:5555")
+        # For network access, use "tcp://*:5555"
+        self.socket.bind("tcp://localhost:5555")
         self.socket.setsockopt_string(zmq.SUBSCRIBE, channel)
 
         self.DESERIALIZER = {
             'json': lambda meta, payload: json.loads(payload.decode('utf-8')),
+            'msgpack': lambda meta, payload: msgpack.unpackb(payload),
+            'set': lambda meta, payload: set(msgpack.unpackb(payload)),
+            'str': lambda meta, payload: payload.decode('utf-8'),
             'numpy': lambda meta, payload: np.frombuffer(payload, dtype=meta['dtype']).reshape(meta['shape']),
             'bytes': lambda meta, payload: payload
         }
     
-    def RECIEVE(self):
-        metadata = self.socket.recv_json()
-        payload = self.socket.recv()
+    def debug_receive(self):
+        raw_frames = self.socket.recv_multipart()
+        print(f"Received a message with {len(raw_frames)} raw byte frames!")
+        for i, frame in enumerate(raw_frames):
+            print(f"  Frame {i}: {frame[:75].decode("utf-8")}")
+        return None, None
 
-        data_type = metadata.get("type", "bytes")
-        decoder = self.DESERIALIZER.get(data_type, lambda m, p: p)
-        return decoder(metadata, payload)
 
+    def receive(self):
+        if self.socket.poll(timeout=0, flags=zmq.POLLIN):
+            raw_frames = self.socket.recv_multipart()
+            if len(raw_frames) < 3: return None
 
-def proxy():
-    context = zmq.Context()
+            incoming_channel = raw_frames[0].decode('utf-8')
+            metadata = json.loads(raw_frames[1].decode('utf-8'))
+            payload = raw_frames[2]
 
-    # 1. Create the incoming track (where sensors connect to publish data)
-    frontend = context.socket(zmq.XSUB)
-    frontend.bind("tcp://*:5555")
-
-    # 2. Create the outgoing track (where UIs connect to subscribe to data)
-    backend = context.socket(zmq.XPUB)
-    backend.bind("tcp://*:5556")
-
-    print("🚂 Switchyard Operator is active. Tracks are locked into place...")
+            data_type = metadata.get("type", "bytes")
+            decoder = self.DESERIALIZER.get(data_type, lambda m, p: p)
+            return decoder(metadata, payload)
     
-    # 3. Connect the tracks. ZeroMQ handles the rest automatically.
-    zmq.proxy(frontend, backend)
+        return None

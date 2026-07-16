@@ -6,11 +6,13 @@ from matplotlib.widgets import Slider
 
 from jarvis_kinematics.matricies import dh_matrix, PI
 from jarvis_core.databus.publisher import Publisher
+from jarvis_core.databus.subscriber import Subscriber
 
 class Display:
     def __init__(self, robot):
         self.robot = robot
-        self.coms = Publisher()
+        self.pub = Publisher()
+        self.sub = Subscriber()
 
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111, projection="3d")
@@ -45,7 +47,7 @@ class Display:
         slider_values = [s.val for s in self.sliders]
 
         matrix = np.array([self.robot.solve_fast[i](*slider_values) for i in range(self.size)])
-        self.coms.PUB(matrix)
+        self.pub.send(matrix, channel="kinematics.pos_data")
 
         xs = []
         ys = []
