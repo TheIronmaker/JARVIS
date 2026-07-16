@@ -20,6 +20,7 @@ classifiers = [
 
 dependencies = [
     "jarvis-core",
+    "jarvis-app",
     "jarvis-kinematics"
 ]
 [project.optional-dependencies]
@@ -50,4 +51,5 @@ package = false
 
 [tool.uv.sources]
 jarvis-core = { workspace = true }
+jarvis-app = { workspace = true }
 jarvis-kinematics = { workspace = true }

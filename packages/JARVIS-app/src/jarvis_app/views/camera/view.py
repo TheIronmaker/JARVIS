@@ -2,8 +2,8 @@ from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt
 
-from jarvis.utils.helpers.img import round_pixmap, get_frame
-from jarvis.app_core.gui_elements import ButtonStack
+from jarvis_core.utils.helpers.img import round_pixmap, get_frame
+from jarvis_app.gui_elements import ButtonStack
 
 class CameraView(QWidget):
     def __init__(self, name, parent, settings):

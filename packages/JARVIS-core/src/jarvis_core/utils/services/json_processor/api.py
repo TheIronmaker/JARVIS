@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from jarvis.core.logger import Logger
+from jarvis_core.logger import Logger
 
 def load_json(name: str, base: Path = None, level: int = None) -> dict:
     base = base or Path(__file__).parent

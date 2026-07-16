@@ -8,7 +8,9 @@ version = "0.1.0"
 license = { text = "Apache-2.0" } 
 dependencies = [
     "pyzmq",
-    "msgpack"
+    "msgpack",
+    "opencv-python",
+    "platformdirs"
 ]
 
 [tool.setuptools.packages.find]

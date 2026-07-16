@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from jarvis.core.logger import Logger
-from jarvis.utils.services.json_processor import load_json, merge_dictionary
+from jarvis_core.logger import Logger
+from jarvis_core.utils.services.json_processor import load_json, merge_dictionary
 
 class NodeManager:    
     def initialize(self, classes=None, package=[]):

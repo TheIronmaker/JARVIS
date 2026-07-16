@@ -4,8 +4,8 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, Q
 from PySide6.QtGui import QPainter
 from PySide6.QtCore import Qt, QTimer
 
-from jarvis.app_core.view_manager import ViewManager
-from jarvis.utils.services.path_resolver import PathResolver
+from jarvis_app.view_manager import ViewManager
+from jarvis_core.utils.services.path_resolver import PathResolver
 
 BUILDS_DATA = PathResolver.load_file("app_main", ".json", "project", "configs/apps")
 
@@ -80,7 +80,7 @@ class MainWindow(QMainWindow):
 def app(*args):
     # From settings, determine if app will contain OpenGL view. If so, set global QSurfaceFormat. Setting change will apply when app restarts
     #if "-" in sys.argv:
-    from jarvis.app_core.views.gl_render import PS6
+    from jarvis_app.engines.OpenGL_Engine import PS6
     PS6.set_QSurfaceFormat()
 
     app = QApplication(sys.argv)
