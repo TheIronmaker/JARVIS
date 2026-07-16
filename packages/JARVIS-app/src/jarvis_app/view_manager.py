@@ -19,7 +19,7 @@ class ViewManager(NodeManager):
         self.config = config
         self.classes = app_views.__all__
         
-        # Create Manager Attributes - restrict this from running if GUI does not show it (dynammic loading of views as needed)
+        # Create Manager Attributes - restrict this from running if GUI does not show it (dynamic loading of views as needed)
         super().__init__()
         self.initialize(self.classes, package=[parent])
         self.build = PathResolver.load_file(config["manager"], ".json", "project", "configs/managers/views")

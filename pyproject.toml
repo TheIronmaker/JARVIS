@@ -23,24 +23,6 @@ dependencies = [
     "jarvis-app",
     "jarvis-kinematics"
 ]
-[project.optional-dependencies]
-ui = [
-    "PySide6"
-]
-open_gl = [
-    "PyOpenGL",
-    "glm"
-]
-ai_tracking = [
-    "mediapipe",
-    "opencv-python"
-]
-raspi = [
-    "adafruit-circuitpython-servokit"
-]
-all = [
-    "jarvis[ui,ai_tracking,raspi,platformdirs]"
-]
 
 [tool.uv.workspace]
 members = ["packages/*"]

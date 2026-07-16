@@ -4,15 +4,13 @@ import sympy as sp
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
-from jarvis_kinematics.matricies import dh_matrix, PI
+from jarvis_kinematics.matrices import dh_matrix, PI
 from jarvis_core.databus.publisher import Publisher
-from jarvis_core.databus.subscriber import Subscriber
 
 class Display:
     def __init__(self, robot):
         self.robot = robot
         self.pub = Publisher()
-        self.sub = Subscriber()
 
         self.fig = plt.figure()
         self.ax = self.fig.add_subplot(111, projection="3d")

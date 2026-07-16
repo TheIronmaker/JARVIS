@@ -1,12 +1,12 @@
-from logging import Logger
 from pathlib import Path
 
-from jarvis.core.threaded import ThreadedResource
-from jarvis.core.databus import DataBus
-from jarvis.modules import ModuleManager
-from jarvis.app_core.app import app
+from jarvis_core.logger import Logger
+from jarvis_core.threaded import ThreadedResource
+from jarvis_core.databus import DataBus
+from jarvis_core.modules import ModuleManager
+from jarvis_app.app import app
 
-from jarvis.utils.services.path_resolver import PathResolver
+from jarvis_core.utils.services.path_resolver import PathResolver
 
 CONFIG = PathResolver.load_file("core_main", ".json", "project", "configs/core")
 CORE_BUILD_DIR = Path(__file__).parent / "core_builds"
@@ -17,7 +17,7 @@ class Core(ThreadedResource):
         self.parent_config = parent_config
         self.bus = DataBus()
 
-        # Idealy, the id would be almost any type of data format a config could store.
+        # Ideally, the id would be almost any type of data format a config could store.
         self.config = PathResolver.load_file(str(id), ".json", "project", "configs/core")
         super().__init__(self.config.get("cycle_time"))
     
@@ -33,13 +33,14 @@ class Core(ThreadedResource):
         elif self.config.get("run_method") == "app":
             app(self.bus) # This will take over the main thread - Later create a method to handle this
             # First code will not end until all cores are stopped, right now.
-            # Biggest issue: cores start in successiont of each other, since the app takes over main thread
+            # Biggest issue: cores start in succession of each other, since the app takes over main thread
 
     def load_module_managers(self):
         for manager_build in self.config.get("module_managers", []):
             if manager_build.get("enabled", True):
                 id = manager_build.get("id")
                 if not id:
+                    
                     Logger.error("Module manager build missing id. Skipping.")
                     continue
                 manager = ModuleManager(self.bus, id)
@@ -48,20 +49,6 @@ class Core(ThreadedResource):
 
     def _main_process(self):
         pass
-        """
-        # Will need to make a dynamic module creation system: Thoughts:
-        # module sends signal including which manager it came from, if module managed, so it can put it there.
-        # Might also create option to include the name of a module to put it in, regardless of where it came from.
-        if self.bus.get("camera.create"):
-            camera = self.module_manager.construct({"type":"camera", "name":"camera"}, [self.bus])
-            if not isinstance(camera, str):
-                camera._start_thread()
-            self.bus.publish("camera.create", False)
-
-        if self.bus.get("camera.destruct", False) and self.module_manager.exists("camera"):
-            self.module_manager.destruct("camera")
-            self.bus.publish("camera.destruct", False)
-        """
     
     def _close(self):
         for module_manager in self.module_managers.values():

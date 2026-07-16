@@ -9,4 +9,11 @@ The use of short-tags allows more flexibility. For example: `@LEAD@re-Andy`indic
 
 # Random Tid-Bits (to grow)
 ### To count lines of python code in project folder
+```
 find . -type f -name "*.py" | xargs wc -l
+```
+
+### Excluding virtual environments from search
+```
+find . -type f -name "*.py" | grep -v "/venv/" | xargs wc -l
+```

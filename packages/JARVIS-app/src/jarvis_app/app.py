@@ -7,14 +7,13 @@ from PySide6.QtCore import Qt, QTimer
 from jarvis_app.view_manager import ViewManager
 from jarvis_core.utils.services.path_resolver import PathResolver
 
-BUILDS_DATA = PathResolver.load_file("app_main", ".json", "project", "configs/apps")
 
 class MainWindow(QMainWindow):
     def __init__(self, bus):
         super().__init__()
         self.bus = bus
 
-        self.build = BUILDS_DATA
+        self.build = PathResolver.load_file("app_main", ".json", "project", "configs/apps")
         self.view_managers = {}
         self.docks = {}
 

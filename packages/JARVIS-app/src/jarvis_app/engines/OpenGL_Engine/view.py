@@ -23,7 +23,7 @@ from OpenGL.GL import *
 import glm
 
 from .shaders import VERTEX_SHADER, FRAGMENT_SHADER
-from jarvis.modules.atom_sim import AtomSimNode
+from jarvis_core.modules.atom_sim import AtomSimNode
 
 class PS6():
     @staticmethod

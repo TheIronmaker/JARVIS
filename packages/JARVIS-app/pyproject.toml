@@ -11,5 +11,12 @@ dependencies = [
     "PySide6"
 ]
 
+[project.optional-dependencies]
+OpenGL-engine = [
+    "PyOpenGL",
+    "PyGLM",
+    "numpy"
+]
+
 [tool.setuptools.packages.find]
 where = ["src"]
