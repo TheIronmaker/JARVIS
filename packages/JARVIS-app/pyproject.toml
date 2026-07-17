@@ -8,14 +8,19 @@ version = "0.1.0"
 license = { text = "Apache-2.0" } 
 dependencies = [
     "jarvis-core",
-    "PySide6"
+    "PySide6",
+    "numpy"
 ]
 
 [project.optional-dependencies]
 OpenGL-engine = [
     "PyOpenGL",
     "PyGLM",
-    "numpy"
+]
+
+ModernGL-engine = [
+    "ModernGL",
+    "PyGLM"
 ]
 
 [tool.setuptools.packages.find]

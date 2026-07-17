@@ -79,7 +79,7 @@ class MainWindow(QMainWindow):
 def app(*args):
     # From settings, determine if app will contain OpenGL view. If so, set global QSurfaceFormat. Setting change will apply when app restarts
     #if "-" in sys.argv:
-    from jarvis_app.engines.OpenGL_Engine import PS6
+    from jarvis_app.engines.OpenGL_engine import PS6
     PS6.set_QSurfaceFormat()
 
     app = QApplication(sys.argv)

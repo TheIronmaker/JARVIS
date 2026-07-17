@@ -13,5 +13,10 @@ dependencies = [
     "platformdirs"
 ]
 
+[project.optional-dependencies]
+hand-tracking = [
+    "mediapipe"
+]
+
 [tool.setuptools.packages.find]
 where = ["src"]

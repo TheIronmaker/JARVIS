@@ -6,11 +6,11 @@ from PySide6.QtOpenGLWidgets import QOpenGLWidget
 from OpenGL.GL import *
 import glm
 
-from jarvis_app.engines.OpenGL_Engine.camera import Camera
-from jarvis_app.engines.OpenGL_Engine.shaders import VERTEX_SHADER, FRAGMENT_SHADER
+from jarvis_app.engines.OpenGL_engine.camera import Camera
+from jarvis_app.engines.OpenGL_engine.shaders import VERTEX_SHADER, FRAGMENT_SHADER
+from jarvis_core.modules.atom_sim import AtomSimNode
 
-
-def set_QSurfaceFormat():
+def OpenGL_QSurfaceFormat():
     format = QSurfaceFormat()
     format.setSamples(4) # Request 4x multi-sampling for anti-aliasing
     format.setMajorVersion(4) # Request OpenGL version 4.1 as the highest supported version by macOS

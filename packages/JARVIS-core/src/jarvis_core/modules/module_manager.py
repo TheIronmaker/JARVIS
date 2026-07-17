@@ -1,10 +1,10 @@
 import importlib
 from pathlib import Path
 
-from jarvis.core.logger import Logger
-from jarvis.managers.node_manager import NodeManager
-import jarvis.modules as modules
-from jarvis.utils.services.path_resolver import PathResolver
+from jarvis_core.logger import Logger
+from jarvis_core.managers.node_manager import NodeManager
+import jarvis_core.modules as modules
+from jarvis_core.utils.services.path_resolver import PathResolver
 
 MODULES_DIR = Path(__file__).parent
 
