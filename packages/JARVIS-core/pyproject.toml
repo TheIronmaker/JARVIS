@@ -10,7 +10,8 @@ dependencies = [
     "pyzmq",
     "msgpack",
     "opencv-python",
-    "platformdirs"
+    "platformdirs",
+    "pyyaml",
 ]
 
 [project.optional-dependencies]

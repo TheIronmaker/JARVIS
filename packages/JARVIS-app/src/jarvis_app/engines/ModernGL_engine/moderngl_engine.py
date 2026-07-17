@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt
 from PySide6 import QtGui
 
 from jarvis_app.tools.simple_app import SimpleApp
+from jarvis_core.utils.services.path_resolver import PathResolver, FileManager
 from jarvis_core.databus.subscriber import Subscriber
 
 class ModernGLWidget(QtOpenGLWidgets.QOpenGLWidget):
@@ -44,6 +45,9 @@ def win_format():
     fmt.setProfile(QtGui.QSurfaceFormat.OpenGLContextProfile.CoreProfile)
     fmt.setAlphaBufferSize(8) # Recommended, not needed
     QtGui.QSurfaceFormat.setDefaultFormat(fmt)
+
+resolver = PathResolver()
+print(resolver.resolve_path("config", "YAML", "config"))
 
 if __name__ == "__main__":
     win_format()

@@ -25,7 +25,7 @@ dependencies = [
 ]
 
 [tool.uv.workspace]
-members = ["packages/*"]
+members = [".", "packages/*"]
 
 [tool.uv]
 managed = true

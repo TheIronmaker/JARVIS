@@ -9,7 +9,8 @@ license = { text = "Apache-2.0" }
 dependencies = [
     "jarvis-core",
     "PySide6",
-    "numpy"
+    "numpy",
+    "opencv-python"
 ]
 
 [project.optional-dependencies]
@@ -21,6 +22,12 @@ OpenGL-engine = [
 ModernGL-engine = [
     "ModernGL",
     "PyGLM"
+]
+
+all-engine = [
+    "PyOpenGL",
+    "ModernGL",
+    "PyGLM",
 ]
 
 [tool.setuptools.packages.find]

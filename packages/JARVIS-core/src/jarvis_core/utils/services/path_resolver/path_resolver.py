@@ -1,7 +1,13 @@
-# jarvis/utils/services/path_resolver.py
-import json
+# jarvis/utils/services/path_resolver/path_resolver.py
 from pathlib import Path
-from platformdirs import user_config_dir, user_data_dir, user_cache_dir
+from platformdirs import user_config_dir, user_data_dir, user_cache_dir # Eventually Logs and State
+
+# Supported loaders - should be using importlib throughout project...
+import json
+import yaml
+
+# This is a good framework to build on. Just need to handle the errors different than `raise` errors
+# Should also rebuild extension handling with `re` parsing for multiple file formats
 
 """
 Plan (config):
@@ -10,16 +16,21 @@ If not, use importlib.resources to read the config file from jarvis and copy it 
 It should load the file from the user's directory from then on.
 """
 
-class FileLoader:
+class FileManager:
     @staticmethod
-    def load_json(path: str):
-        with open(path) as f:
+    def load_json(path: str | Path, config: dict = {}):
+        with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
     
     @staticmethod
-    def load_txt(path: str):
-        with open(path) as f:
+    def load_txt(path: str | Path, config: dict = {}):
+        with open(path, "r", config.get("encoding", "utf-8")) as f:
             return f.read()
+    
+    @staticmethod
+    def load_YAML(path: str | Path, config: dict = {}):
+        with open(path, "r", config.get("encoding", "utf-8")) as f:
+            return yaml.safe_load(f)
 
 class PathResolver:
     """
@@ -40,8 +51,9 @@ class PathResolver:
         "CACHE": Path(user_cache_dir("jarvis"))
     }
     SCHEMA_FORMAT = {
-        ".json": FileLoader.load_json,
-        ".txt": FileLoader.load_txt
+        ".json": FileManager.load_json,
+        ".txt": FileManager.load_txt,
+        ".YAML": FileManager.load_YAML
     }
 
     @staticmethod
@@ -95,7 +107,7 @@ class PathResolver:
         raise FileNotFoundError(path)
 
     @staticmethod
-    def load_file(filename: str, extension: str=None, domain: str="package", location: str|Path=None, *args, **kwargs) -> any:
+    def load_file(filename: str, extension: str=None, domain: str="package", location: str|Path=None, config:dict={}) -> any:
         """ Loads a file based on the resolved path and returns its contents.
         Args:
             filename (str): The name of the file (extension may be provided in the extension field).
@@ -115,4 +127,4 @@ class PathResolver:
         if not loader:
             raise ValueError(f"Unsupported file format '{ext}'. Currently only {', '.join(PathResolver.SCHEMA_FORMAT.keys())} are supported.")
          
-        return loader(path, *args, **kwargs)
+        return loader(path, config)
