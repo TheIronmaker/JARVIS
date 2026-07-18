@@ -24,12 +24,12 @@ class FileManager:
     
     @staticmethod
     def load_txt(path: str | Path, config: dict = {}):
-        with open(path, "r", config.get("encoding", "utf-8")) as f:
+        with open(path, "r", encoding=config.get("encoding", "utf-8")) as f:
             return f.read()
     
     @staticmethod
     def load_YAML(path: str | Path, config: dict = {}):
-        with open(path, "r", config.get("encoding", "utf-8")) as f:
+        with open(path, "r", encoding=config.get("encoding", "utf-8")) as f:
             return yaml.safe_load(f)
 
 class PathResolver:
@@ -45,7 +45,7 @@ class PathResolver:
 
     SCHEMA_ROOT = {
         "PACKAGE": Path(__file__).parent.parent.parent,
-        "PROJECT": Path(__file__).parent.parent.parent.parent.parent,
+        "PROJECT": Path(__file__).resolve().parents[7],
         "CONFIG": Path(user_config_dir("jarvis")),
         "DATA": Path(user_data_dir("jarvis")),
         "CACHE": Path(user_cache_dir("jarvis"))
@@ -53,7 +53,7 @@ class PathResolver:
     SCHEMA_FORMAT = {
         ".json": FileManager.load_json,
         ".txt": FileManager.load_txt,
-        ".YAML": FileManager.load_YAML
+        ".yaml": FileManager.load_YAML
     }
 
     @staticmethod
@@ -78,7 +78,13 @@ class PathResolver:
         return extension if extension.startswith(".") else f".{extension}"
 
     @staticmethod
-    def resolve_path(filename: str, extension: str=None, domain: str="package", location: str|Path=None) -> Path:
+    def resolve_path(
+        filename: str,
+        extension: str=None,
+        domain: str="package",
+        location: str|Path=None
+        ) -> Path:
+        
         """ Resolves a file path based on the given parameters and the defined schema.
         Args:
             filename (str): The name of the file (with or without extension).
@@ -107,7 +113,14 @@ class PathResolver:
         raise FileNotFoundError(path)
 
     @staticmethod
-    def load_file(filename: str, extension: str=None, domain: str="package", location: str|Path=None, config:dict={}) -> any:
+    def load_file(
+        filename: str,
+        extension: str=None,
+        domain: str="package",
+        location: str|Path=None,
+        config:dict={}
+        ) -> any:
+
         """ Loads a file based on the resolved path and returns its contents.
         Args:
             filename (str): The name of the file (extension may be provided in the extension field).
@@ -123,7 +136,7 @@ class PathResolver:
         
         path = PathResolver.resolve_path(filename, extension, domain, location)
         ext = PathResolver.format_ext(extension) if extension else PathResolver.separate_ext(filename)[1]
-        loader = PathResolver.SCHEMA_FORMAT.get(ext)
+        loader = PathResolver.SCHEMA_FORMAT.get(ext.lower())
         if not loader:
             raise ValueError(f"Unsupported file format '{ext}'. Currently only {', '.join(PathResolver.SCHEMA_FORMAT.keys())} are supported.")
          

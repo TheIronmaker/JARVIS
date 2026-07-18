@@ -11,7 +11,8 @@ dependencies = [
     "msgpack",
     "opencv-python",
     "platformdirs",
-    "pyyaml",
+    "deepmerge",
+    "pyyaml"
 ]
 
 [project.optional-dependencies]

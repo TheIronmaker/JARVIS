@@ -1,0 +1,18 @@
+fmt:
+  version: # Minimum OpenGL version for ModernGL
+    major: 3
+    minor: 3
+  profile: "CoreProfile"
+  options:
+    "DeprecatedFunctions"
+  remove_deprecation: True
+  transparency:
+    alpha_buffer_size: None
+
+main_window:
+  size:
+    x: 2400
+    y: 1600
+  title: "JARVIS"
+  ui_layout:
+    central_widget: ModernGLWidget

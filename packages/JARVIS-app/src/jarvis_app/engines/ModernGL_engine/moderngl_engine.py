@@ -2,17 +2,17 @@ import moderngl
 
 from PySide6 import QtGui, QtOpenGLWidgets
 from PySide6.QtCore import Qt
-from PySide6 import QtGui
 
 from jarvis_app.tools.simple_app import SimpleApp
-from jarvis_core.utils.services.path_resolver import PathResolver, FileManager
+from jarvis_core.utils.services.path_resolver import PathResolver
+from jarvis_core.utils.collections import deep_merge
 from jarvis_core.databus.subscriber import Subscriber
 
 class ModernGLWidget(QtOpenGLWidgets.QOpenGLWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # Changes color? Investigate.
+        # Removes window background color (default bright blue)
         self.setAttribute(Qt.WidgetAttribute.WA_AlwaysStackOnTop)
         self.ctx = None
 
@@ -22,7 +22,6 @@ class ModernGLWidget(QtOpenGLWidgets.QOpenGLWidget):
         # Transparent Window - None of these were required... Maybe while rendering?
         self.ctx.enable(moderngl.BLEND)
         self.ctx.blend_func = (moderngl.SRC_ALPHA, moderngl.ONE_MINUS_SRC_ALPHA)
-        self.ctx.clear(red=0.5, green=0.7, blue=1.0, alpha=1.0)
         self.ctx.disable(moderngl.GL_DEPTH_TEST)
 
     def resizeGL(self, w, h):
@@ -38,21 +37,45 @@ class ModernGLWidget(QtOpenGLWidgets.QOpenGLWidget):
 
         # --- ModernGL rendering code goes here - e.g. vao---
 
-def win_format():
+
+def app_fmt(config:dict):
+    if not config: return
     # Setup surface format for ModernGL compatibility - Required
+
+    profiles = {
+        "CoreProfile": QtGui.QSurfaceFormat.OpenGLContextProfile.CoreProfile,
+        "CompatibilityProfile": QtGui.QSurfaceFormat.OpenGLContextProfile.CompatibilityProfile,
+        "NoProfile": QtGui.QSurfaceFormat.OpenGLContextProfile.NoProfile
+    }
+
+    options = {
+        "DeprecatedFunctions": QtGui.QSurfaceFormat.FormatOption.DeprecatedFunctions,
+        "DebugContext": QtGui.QSurfaceFormat.FormatOption.DebugContext,
+        "ResetNotification": QtGui.QSurfaceFormat.FormatOption.ResetNotification,
+        "StereoBuffers": QtGui.QSurfaceFormat.FormatOption.StereoBuffers
+    }
+
     fmt = QtGui.QSurfaceFormat()
-    fmt.setVersion(3, 3) # Minimum OpenGL version for ModernGL
-    fmt.setProfile(QtGui.QSurfaceFormat.OpenGLContextProfile.CoreProfile)
-    fmt.setAlphaBufferSize(8) # Recommended, not needed
+    fmt.setVersion(config["version"]["major"], config["version"]["minor"])
+    fmt.setProfile(profiles.get(config["profile"], profiles["CoreProfile"]))
+
+    for opt in config.get("options", []):
+        if flag := options.get(opt):
+            fmt.setOption(flag)
+    
+    if type(config["transparency"]["alpha_buffer_size"]) == int:
+        fmt.setAlphaBufferSize(config["transparency"]["alpha_buffer_size"])
+    
     QtGui.QSurfaceFormat.setDefaultFormat(fmt)
 
 resolver = PathResolver()
-print(resolver.resolve_path("config", "YAML", "config"))
+app_config = resolver.load_file("main", "yaml", "config", "app/builds")
+default_config = resolver.load_file("default", "yaml", "project", "packages/jarvis-app/config/ModernGL")
+
+config = deep_merge(default_config, app_config)
+config["main_window"]["ui_layout"]["central_widget"] = ModernGLWidget
 
 if __name__ == "__main__":
-    win_format()
-    app = SimpleApp()
-    app.launch({
-        "title": "Test App for ModernGL",
-        "central_widget": ModernGLWidget()
-    })
+    app_fmt(config.get("fmt"))
+    app = SimpleApp(config)
+    app.launch()
