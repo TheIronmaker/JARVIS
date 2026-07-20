@@ -40,7 +40,6 @@ class ModernGLWidget(QtOpenGLWidgets.QOpenGLWidget):
 
 def app_fmt(config:dict):
     if not config: return
-    # Setup surface format for ModernGL compatibility - Required
 
     profiles = {
         "CoreProfile": QtGui.QSurfaceFormat.OpenGLContextProfile.CoreProfile,
@@ -58,24 +57,23 @@ def app_fmt(config:dict):
     fmt = QtGui.QSurfaceFormat()
     fmt.setVersion(config["version"]["major"], config["version"]["minor"])
     fmt.setProfile(profiles.get(config["profile"], profiles["CoreProfile"]))
-
-    for opt in config.get("options", []):
-        if flag := options.get(opt):
-            fmt.setOption(flag)
+    
+    options = config.get("options")
+    #options = [] if options is None else [options] if isinstance(options, str) else options
+    for opt in options: fmt.setOption(getattr(QtGui.QSurfaceFormat.FormatOption, opt))
     
     if type(config["transparency"]["alpha_buffer_size"]) == int:
         fmt.setAlphaBufferSize(config["transparency"]["alpha_buffer_size"])
     
     QtGui.QSurfaceFormat.setDefaultFormat(fmt)
 
-resolver = PathResolver()
-app_config = resolver.load_file("main", "yaml", "config", "app/builds")
-default_config = resolver.load_file("default", "yaml", "project", "packages/jarvis-app/config/ModernGL")
-
-config = deep_merge(default_config, app_config)
-config["main_window"]["ui_layout"]["central_widget"] = ModernGLWidget
-
 if __name__ == "__main__":
+    resolver = PathResolver()
+    app_config = resolver.load_file("main", "yaml", "config", "app/builds")
+    default_config = resolver.load_file("default", "yaml", "project", "packages/jarvis-app/config/ModernGL")
+    config = deep_merge(default_config, app_config)
+    config["main_window"]["ui_layout"]["central_widget"] = ModernGLWidget
+
     app_fmt(config.get("fmt"))
     app = SimpleApp(config)
     app.launch()

@@ -1,18 +1,61 @@
+yaml_setup:
+  context: full
+
 fmt:
-  version: # Minimum OpenGL version for ModernGL
-    major: 3
-    minor: 3
-  profile: "CoreProfile"
+  details: "Configuration attributes for the initialization of a ModernGL Application"
+  type: collection
+
+  version:
+    details: "OpenGL version for ModernGL"
+    dev_notes: "Set the version above 3.3 for compatibility with most modern computers."
+    attr: [3, 3]
+    type: list(int)
+
+  profile:
+    details: "The profile to use for the OpenGL context"
+    attr: "CoreProfile"
+    type: str
+
   options:
-    "DeprecatedFunctions"
-  remove_deprecation: True
+    details: "List of default ModernGL options to set"
+    attr: ["DeprecatedFunctions"]
+    type: list(str)
+
   transparency:
-    alpha_buffer_size: None
+    alpha_buffer:
+      details: "Bit depth of the alpha buffer (null means no alpha channel)"
+      attr: null
+      type: [null, int]
+      range:
+        int: [0, 64, 8]
+      units:
+        int: bit
 
 main_window:
   size:
-    x: 2400
-    y: 1600
+    details: "Size of the main window"
+    type: collection
+    width:
+      details: "Window horizontal width"
+      attr: 2400
+      type: int
+      units: px
+      range:
+        int: [1, null]
+    height:
+      details: "Window vertical height"
+      attr: 1600
+      type: int
+      range:
+        int: [1, null]
+    depth: null
+
   title: "JARVIS"
+  details: "Title of the main window"
+
   ui_layout:
-    central_widget: ModernGLWidget
+    details: "Central widget to be used in the UI layout"
+    central_widget:
+      details: "Temporary "
+      attr: ModernGLWidget
+      type: [ModernGL.Widget, func]

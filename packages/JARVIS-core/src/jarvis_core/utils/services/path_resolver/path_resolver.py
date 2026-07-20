@@ -139,5 +139,9 @@ class PathResolver:
         loader = PathResolver.SCHEMA_FORMAT.get(ext.lower())
         if not loader:
             raise ValueError(f"Unsupported file format '{ext}'. Currently only {', '.join(PathResolver.SCHEMA_FORMAT.keys())} are supported.")
-         
-        return loader(path, config)
+        
+        try:
+            data = loader(path, config)
+        except:
+            raise FileNotFoundError("File failed to load!")
+        return data
