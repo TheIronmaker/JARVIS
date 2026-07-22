@@ -1,4 +1,4 @@
-from jarvis.core.threaded import ThreadedResource
+from jarvis_core.threaded import ThreadedResource
 
 class PCA9685Node(ThreadedResource):
     def __init__(self, name, bus, address="", busnum=None):
@@ -13,7 +13,7 @@ class PCA9685Node(ThreadedResource):
             if os.uname().sysname == "Linux":
                 from adafruit_servokit import ServoKit
             else:
-                from jarvis.modules.PCA9685.mock_servokit import MockServoKit as ServoKit
+                from jarvis_core.modules.PCA9685.mock_servokit import MockServoKit as ServoKit
 
             self.kit = ServoKit(channels=16, address=self.address, busnum=self.busnum)
         except Exception as e:

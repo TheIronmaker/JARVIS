@@ -2,9 +2,7 @@
 from pathlib import Path
 from platformdirs import user_config_dir, user_data_dir, user_cache_dir # Eventually Logs and State
 
-# Supported loaders - should be using importlib throughout project...
-import json
-import yaml
+from .file_manager import FileManager
 
 # This is a good framework to build on. Just need to handle the errors different than `raise` errors
 # Should also rebuild extension handling with `re` parsing for multiple file formats
@@ -15,22 +13,6 @@ Check if a config file exists in the correct place in platformdirs.user_config_d
 If not, use importlib.resources to read the config file from jarvis and copy it to the user's config directory.
 It should load the file from the user's directory from then on.
 """
-
-class FileManager:
-    @staticmethod
-    def load_json(path: str | Path, config: dict = {}):
-        with open(path, "r", encoding="utf-8") as f:
-            return json.load(f)
-    
-    @staticmethod
-    def load_txt(path: str | Path, config: dict = {}):
-        with open(path, "r", encoding=config.get("encoding", "utf-8")) as f:
-            return f.read()
-    
-    @staticmethod
-    def load_YAML(path: str | Path, config: dict = {}):
-        with open(path, "r", encoding=config.get("encoding", "utf-8")) as f:
-            return yaml.safe_load(f)
 
 class PathResolver:
     """

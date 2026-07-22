@@ -1,0 +1,22 @@
+
+fmt_lean:
+  context: lean-config
+
+  version: [3, 3]
+  profile: "CoreProfile"
+  options: ["DeprecatedFunctions"]
+  transparency:
+    context: lean-config
+    alpha_buffer: null
+
+main_window_lean:
+  size:
+    context: lean-config
+    width: 2400
+    height: 1600
+    depth: null
+  
+  title: "JARVIS"
+  ui_layout:
+    type: collection
+    central_widget: ModernGLWidget

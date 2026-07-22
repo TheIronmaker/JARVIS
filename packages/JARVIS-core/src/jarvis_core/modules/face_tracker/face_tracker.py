@@ -1,6 +1,6 @@
 import mediapipe as mp
 
-from jarvis.core.logger import Logger
+from jarvis_core.logger import Logger
 
 class FaceTrackerNode:    
     def __init__(self, name, bus, settings):

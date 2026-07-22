@@ -22,7 +22,7 @@ def OpenGL_QSurfaceFormat():
     QSurfaceFormat.setDefaultFormat(format) # Apply settings globally
 
 
-class EngineOpenGL(QOpenGLWidget):
+class OpenGLEngine(QOpenGLWidget):
     def __init__(self, name, parent, vertices:np.float32=None, particles:np.ndarray=None, scale=1.0):
         super().__init__()
         self.name = name

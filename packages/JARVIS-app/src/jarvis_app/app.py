@@ -33,7 +33,6 @@ class MainWindow(QMainWindow):
         central = QWidget()
         layout = QHBoxLayout() # Will need config driven approach
 
-        # Main area
         self.workspace = QLabel("Main workspace")
         self.workspace.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
         
@@ -44,7 +43,6 @@ class MainWindow(QMainWindow):
                 #view_stack.addWidget(self.workspace)
                 layout.addLayout(view_stack)
 
-        # Finishing
         layout.setContentsMargins(0, 0, 0, 0)
         central.setLayout(layout)
         self.setCentralWidget(central)
@@ -67,7 +65,7 @@ class MainWindow(QMainWindow):
         self.docks[name] = dock
     
     def paintEvent(self, event):
-        # Handles all paint events. PySide6 painter may only be used within this function
+        """ Handles all paint events. PySide6 painter may only be used within this function """
         with QPainter(self) as painter:
             for view_manager in self.view_managers.values():
                 view_manager.paint_views(event, painter)
@@ -77,10 +75,9 @@ class MainWindow(QMainWindow):
             view_manager.keyPressEvent(event)
 
 def app(*args):
-    # From settings, determine if app will contain OpenGL view. If so, set global QSurfaceFormat. Setting change will apply when app restarts
-    #if "-" in sys.argv:
-    from jarvis_app.engines.OpenGL_engine import PS6
-    PS6.set_QSurfaceFormat()
+    # QSurfaceFormat will be set from yaml configuration
+    from jarvis_app.engines.OpenGL_engine import OpenGL_QSurfaceFormat as PS6
+    PS6()
 
     app = QApplication(sys.argv)
     window = MainWindow(*args)
@@ -94,3 +91,8 @@ def app(*args):
     timer.start()
 
     app.exec()
+
+if __name__ == "__main__":
+    from jarvis_core.databus.databus_V1 import DataBus
+    bus = DataBus()
+    app(bus)

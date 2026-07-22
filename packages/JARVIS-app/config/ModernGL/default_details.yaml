@@ -1,61 +1,60 @@
-yaml_setup:
-  context: full
 
 fmt:
+  context: full-config
   details: "Configuration attributes for the initialization of a ModernGL Application"
   type: collection
 
   version:
     details: "OpenGL version for ModernGL"
     dev_notes: "Set the version above 3.3 for compatibility with most modern computers."
-    attr: [3, 3]
+    requirements: OpenGL>=3.3
     type: list(int)
 
   profile:
     details: "The profile to use for the OpenGL context"
-    attr: "CoreProfile"
     type: str
 
   options:
     details: "List of default ModernGL options to set"
-    attr: ["DeprecatedFunctions"]
     type: list(str)
 
   transparency:
+    type: collection
     alpha_buffer:
       details: "Bit depth of the alpha buffer (null means no alpha channel)"
-      attr: null
       type: [null, int]
       range:
         int: [0, 64, 8]
       units:
         int: bit
 
+
 main_window:
+  context: full-config
+  type: collection
+
   size:
     details: "Size of the main window"
     type: collection
     width:
       details: "Window horizontal width"
-      attr: 2400
       type: int
       units: px
       range:
         int: [1, null]
     height:
       details: "Window vertical height"
-      attr: 1600
       type: int
       range:
         int: [1, null]
     depth: null
 
-  title: "JARVIS"
-  details: "Title of the main window"
+  title:
+    details: "Title of the main window"
+    type: str
 
   ui_layout:
-    details: "Central widget to be used in the UI layout"
+    details: The main UI layout when opening the project
     central_widget:
-      details: "Temporary "
-      attr: ModernGLWidget
-      type: [ModernGL.Widget, func]
+      details: Central widget to be used in the UI layout
+      type: widget

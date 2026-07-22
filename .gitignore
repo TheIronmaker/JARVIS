@@ -31,6 +31,8 @@ workspace.md
 *temp.py
 *test.py
 
+yaml_editor/
+
 # Config data
 configs.example/
 !configs.example/
