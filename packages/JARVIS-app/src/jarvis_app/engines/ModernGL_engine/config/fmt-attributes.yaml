@@ -1,0 +1,28 @@
+
+context: config-attributes
+details: "Configuration attributes for the initialization of a ModernGL Application"
+type: collection
+
+version:
+  details: "OpenGL version for ModernGL"
+  dev_notes: "Set the version above 3.3 for compatibility with most modern computers."
+  requirements: OpenGL>=3.3
+  type: list(int)
+
+profile:
+  details: "The profile to use for the OpenGL context"
+  type: str
+
+options:
+  details: "List of default ModernGL options to set"
+  type: list(str)
+
+transparency:
+  type: collection
+  alpha_buffer:
+    details: "Bit depth of the alpha buffer (null means no alpha channel)"
+    type: [null, int]
+    range:
+      int: [0, 64, 8]
+    units:
+      int: bit

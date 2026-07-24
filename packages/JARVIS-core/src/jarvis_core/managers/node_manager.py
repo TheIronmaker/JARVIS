@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from jarvis_core.logger import Logger
+from jarvis_core.utils.collections import deep_merge
+from jarvis_core.utils.services.path_resolver import PathResolver
 from jarvis_core.utils.services.json_processor import load_json, merge_dictionary
 
 class NodeManager:    
@@ -45,7 +47,7 @@ class NodeManager:
         if struct_type not in self.classes:
             return f"Class does not exist for struct type: {struct_type}"
         if struct_type not in self.defaults and settings is not None and self.default_dir is not None: # None means settings are disabled from struct's build settings
-            self.defaults[struct_type] = load_json(self.default_dir[0], self.default_dir[1] / struct_type)
+            self.defaults[struct_type] = load_json(self.default_dir[0], self.default_dir[1] / struct_type) # PathResolver.load_file()
         
         struct_name = struct.get("name") or struct_type
         if struct_name in self.nodes:

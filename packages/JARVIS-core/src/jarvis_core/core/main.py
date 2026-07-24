@@ -2,7 +2,7 @@ from pathlib import Path
 
 from jarvis_core.logger import Logger
 from jarvis_core.threaded import ThreadedResource
-from jarvis_core.databus import DataBus
+from jarvis_core.network import DataBus
 from jarvis_core.modules import ModuleManager
 from jarvis_app.app import app
 

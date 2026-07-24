@@ -1,0 +1,30 @@
+
+main_window:
+  context: config-attributes
+  type: collection
+
+  size:
+    details: "Size of the main window"
+    type: collection
+    width:
+      details: "Window horizontal width"
+      type: int
+      units: px
+      range:
+        int: [1, null]
+    height:
+      details: "Window vertical height"
+      type: int
+      range:
+        int: [1, null]
+    depth: null
+
+  title:
+    details: "Title of the main window"
+    type: str
+
+  ui_layout:
+    details: The main UI layout when opening the project
+    central_widget:
+      details: Central widget to be used in the UI layout
+      type: widget

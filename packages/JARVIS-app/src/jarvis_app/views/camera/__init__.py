@@ -1,1 +1,1 @@
-from .view import CameraView
+from .camera_view import CameraView

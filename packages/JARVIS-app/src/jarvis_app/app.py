@@ -4,7 +4,7 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QWidget, QHBoxLayout, Q
 from PySide6.QtGui import QPainter
 from PySide6.QtCore import Qt, QTimer
 
-from jarvis_app.view_manager import ViewManager
+from jarvis_app.view_container import ViewContainer
 from jarvis_core.utils.services.path_resolver import PathResolver
 
 
@@ -25,7 +25,7 @@ class MainWindow(QMainWindow):
             if not config.get("enabled", True):
                 continue
             name = config.get("name")
-            self.view_managers[name] = ViewManager(self, self.bus, config)
+            self.view_managers[name] = ViewContainer(self, self.bus, config)
 
     def _build_central(self):
         self.setWindowTitle("JARVIS")
@@ -93,6 +93,6 @@ def app(*args):
     app.exec()
 
 if __name__ == "__main__":
-    from jarvis_core.databus.databus_V1 import DataBus
+    from jarvis_core.network.databus_V1 import DataBus
     bus = DataBus()
     app(bus)

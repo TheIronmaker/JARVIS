@@ -2,18 +2,24 @@ from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout, QSizePolicy
 from PySide6.QtGui import QImage, QPixmap
 from PySide6.QtCore import Qt
 
+from jarvis_core.utils.services.path_resolver import PathResolver
+from jarvis_core.network import Subscriber, Publisher
 from jarvis_core.utils.helpers.img import round_pixmap, get_frame
 from jarvis_app.gui_elements import ButtonStack
 
 class CameraView(QWidget):
-    def __init__(self, name, parent, settings):
+    def __init__(self, parent):
         super().__init__(parent)
-        self.name = name
         self.parent = parent
-        self.settings = settings
-        
-        self.bus_global = parent.bus
-        self.bus = parent.bus.namespaced(name)
+        self.settings = PathResolver.load_file("ui-base", ".yaml", "project", "packages/jarvis-app/src/jarvis_app/views/camera/config")
+
+        self.cam_links = self.settings["zeromq"]["subs"]["cam-links"]
+        self.link = self.cam_links[0] if isinstance(self.cam_links, list) and self.cam_links else ""
+
+        self.subs = Subscriber(self.link)
+        self.pubs = Publisher()
+
+        self.ID = self.settings.get("ID", None)
 
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(0, 0, 0, 0)
@@ -38,10 +44,10 @@ class CameraView(QWidget):
     
     def start_camera(self):
         # Later, create ability to create camera with special settings through pop-up-type interface.
-        self.parent.bus.publish("create", {"type":"camera", "name":self.name})
+        self.pubs.send({"id":self.ID, "ip":"192.168.XX.XX"}, "camera.create")
     
     def stop_camera(self):
-        self.parent.bus.publish("camera.destruct", True)
+        self.pubs.send({"id":self.ID, "ip":"192.168.XX.XX"}, "camera.destruct")
     
     def poll(self):
         links = self.settings.get("frame_links")

@@ -6,7 +6,7 @@ from PySide6.QtCore import Qt
 from jarvis_app.tools.simple_app import SimpleApp
 from jarvis_core.utils.services.path_resolver import PathResolver
 from jarvis_core.utils.collections import deep_merge
-from jarvis_core.databus.subscriber import Subscriber
+from jarvis_core.network import Subscriber
 
 class ModernGLWidget(QtOpenGLWidgets.QOpenGLWidget):
     def __init__(self, parent=None):

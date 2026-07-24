@@ -1,0 +1,10 @@
+
+context: config-base
+details: Contains base values for a standard ModernGL window
+type: collection
+
+version: [3, 3]
+profile: "CoreProfile"
+options: ["DeprecatedFunctions"]
+transparency:
+  alpha_buffer: null

@@ -1,0 +1,10 @@
+
+context: config-base
+type: collection
+
+zeromq:
+  subs:
+    cam-links: [camera.main]
+
+ui:
+  corner_radius: 12

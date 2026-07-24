@@ -1,0 +1,11 @@
+context: config-base
+
+main_window_lean:
+  size:
+    width: 2400
+    height: 1600
+    depth: null
+  
+  title: "JARVIS"
+  ui_layout:
+    central_widget: ModernGLWidget

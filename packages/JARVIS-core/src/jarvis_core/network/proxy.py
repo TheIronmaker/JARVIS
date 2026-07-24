@@ -1,7 +1,11 @@
 import zmq
 
+class Proxy:
+    def __init__(self):
+        pass
+
 # Basic testing for communication hub
-# The idea is that multiple things can connect to a central namespace/channel and ditribute from there
+# The idea is that multiple things can connect to a central namespace/channel and distribute from there
 def proxy():
     context = zmq.Context()
 

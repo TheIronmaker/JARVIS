@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider
 
 from jarvis_kinematics.matrices import dh_matrix, PI
-from jarvis_core.databus.publisher import Publisher
+from jarvis_core.network import Publisher
 
 class Display:
     def __init__(self, robot):

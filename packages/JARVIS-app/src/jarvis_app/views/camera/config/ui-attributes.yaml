@@ -1,0 +1,18 @@
+context: config-attributes
+type: collection
+
+zeromq:
+  details: "Configures incoming and outgoing communication with other modules"
+  type: collection
+  subs:
+    type: collection
+    cam-links:
+      details: "A list of subscriptions for the camera view"
+      type: list(str)
+
+ui:
+  details: "Contains all ui related features"
+  type: container
+  corner_radius:
+    details: "The radius of the camera view box - test value for now"
+    type: int

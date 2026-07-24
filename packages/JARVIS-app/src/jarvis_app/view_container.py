@@ -12,10 +12,10 @@ from jarvis_core.utils.services.path_resolver import PathResolver
 
 VIEWS_DIR = Path(__file__).parent / "views"
 
-class ViewManager(NodeManager):
+class ViewContainer(NodeManager):
     def __init__(self, parent, bus, config):
         self.parent = parent
-        self.bus = bus
+        self.bus = bus # To be replaced with ZeroMQ
         self.config = config
         self.classes = app_views.__all__
         
